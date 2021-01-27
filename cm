@@ -1,0 +1,49 @@
+#!/usr/bin/env bash -e
+
+trap "exit 1" TERM
+export TOP_PID=$$
+
+DIR=$(dirname $(readlink $0 || echo $0))
+. $DIR/lib/common.sh
+SUBCOMMANDS=$(ls $DIR/subcommands)
+for subcommand in $SUBCOMMANDS
+do
+  . $DIR/subcommands/$subcommand
+done
+
+function usage {
+  errEcho "usage: $(basename ${0}) [OPTIONS] SUBCOMMAND"
+  errEcho
+  errEcho "    SUBCOMMAND is one of the following."
+  errEcho
+  for subcommandFile in $SUBCOMMANDS
+  do
+    local subcommand=$(basename $subcommandFile .sh)
+    errEcho "    $subcommand"
+    errEcho "        $(${subcommand}-description)"
+  done
+  errEcho
+  errEcho "    The following OPTIONS are available:"
+  errEcho
+  errEcho "    -h    Display usage for SUBCOMMAND"
+  errEcho "    -v    Verbosity level for information printed to stderr. Default: 0"
+  errEcho
+  abort
+}
+
+while getopts :v:h o 
+do case "$o" in
+  h)  HELP="true";;
+  v)  VERBOSITY="$OPTARG";;
+  [?]) usage;;
+  esac
+done
+shift $(($OPTIND - 1))
+
+[[ -n $1 && -f $DIR/subcommands/${1}.sh ]] || usage
+if [[ -n $HELP ]]
+then
+  ${1}-usage
+else
+  "$@"
+fi
