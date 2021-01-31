@@ -1,12 +1,12 @@
 # Command for listing resources
-function list-description {
+function list_description {
   echo "List ClusterPools, ClusterClaims, and ClusterDeployments"
 }
 
-function list-usage {
+function list_usage {
   errEcho "usage: $(basename ${0}) list pools|claims|clusters"
   errEcho
-  errEcho "    $(list-description)"
+  errEcho "    $(list_description)"
   errEcho "    Each resource type supports a number of aliases (singular and plural)"
   errEcho "    and is case-insensitve"
   errEcho
@@ -20,16 +20,16 @@ function list-usage {
 function list {
   case $(echo "$1" | tr '[:upper:]' '[:lower:]') in
     pool*|cp*|clusterpool*)
-      ocWithCMContext get ClusterPools
+      ocWithContext cm get ClusterPools
       ;;
     claim*|cc*|clusterclaim*)
-      ocWithCMContext get ClusterClaims -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS"
+      ocWithContext cm get ClusterClaims -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS"
       ;;
     cluster*|cd*|clusterdeployment*)
-      ocWithCMContext get ClusterDeployments -A -L hibernate
+      ocWithContext cm get ClusterDeployments -A -L hibernate
       ;;
     *)
-      list-usage
+      list_usage
       ;;
   esac
 }

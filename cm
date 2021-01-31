@@ -1,4 +1,5 @@
-#!/usr/bin/env bash -e
+#!/usr/bin/env bash --posix
+set -e
 
 trap "exit 1" TERM
 export TOP_PID=$$
@@ -19,8 +20,9 @@ function usage {
   for subcommandFile in $SUBCOMMANDS
   do
     local subcommand=$(basename $subcommandFile .sh)
+    local subcommandFunction=$(echo "$subcommand" | tr '-' '_')
     errEcho "    $subcommand"
-    errEcho "        $(${subcommand}-description)"
+    errEcho "        $(${subcommandFunction}_description)"
   done
   errEcho
   errEcho "    The following OPTIONS are available:"
@@ -40,10 +42,16 @@ do case "$o" in
 done
 shift $(($OPTIND - 1))
 
-[[ -n $1 && -f $DIR/subcommands/${1}.sh ]] || usage
+subcommand="$1"
+[[ -n $subcommand && -f $DIR/subcommands/${subcommand}.sh ]] || usage
+
+subcommandFunction=$(echo "$subcommand" | tr '-' '_')
+shift
+
 if [[ -n $HELP ]]
 then
-  ${1}-usage
+  ${subcommandFunction}_usage
 else
-  "$@"
+  verifyContext cm
+  $subcommandFunction "$@"
 fi

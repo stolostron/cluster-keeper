@@ -1,12 +1,12 @@
 # Command for viewing current kube context
-function current-description {
+function current_description {
   echo "Display the current kube context"
 }
 
-function current-usage {
+function current_usage {
   errEcho "usage: $(basename ${0}) current"
   errEcho
-  errEcho "    $(current-description)"
+  errEcho "    $(current_description)"
   errEcho
   abort
 }

@@ -1,12 +1,12 @@
 # Command for creating new ClusterClaims
-function new-description {
+function new_description {
   echo "Get a new cluster by creating a ClusterClaim"
 }
 
-function new-usage {
+function new_usage {
   errEcho "usage: $(basename ${0}) new [OPTIONS] POOL CLAIM"
   errEcho
-  errEcho "    $(new-description)"
+  errEcho "    $(new_description)"
   errEcho
   errEcho "    POOL is the name of the ClusterPool"
   errEcho "    CLAIM is the name for the new ClusterClaim"
@@ -26,14 +26,14 @@ function new {
   do case "$o" in
     l)  CLUSTERCLAIM_LIFETIME="${OPTARG}h";;
     m)  MANUAL_POWER="true";;
-    [?]) usage;;
+    [?]) new_usage;;
     esac
   done
   shift $(($OPTIND - 1))
 
   if [[ -z $1 || -z $2 ]]
   then
-    new-usage
+    new_usage
   fi
 
   # Use lifeguard/clusterclaims/apply.sh to create ClusterClaim
@@ -43,7 +43,7 @@ function new {
   export CLUSTERCLAIM_GROUP_NAME
   export CLUSTERCLAIM_LIFETIME
   export SKIP_WAIT_AND_CREDENTIALS="true"
-  withCMContext dirSensitiveCmd $(dependency lifeguard/clusterclaims/apply.sh) << EOF
+  withContext cm dirSensitiveCmd $(dependency lifeguard/clusterclaims/apply.sh) << EOF
 N
 EOF
   
@@ -54,7 +54,4 @@ EOF
   else
     disableSchedule $2
   fi
-
-  getCreds $2
-
 }

@@ -1,12 +1,12 @@
 # Command for launching the OpenShift console
-function console-description {
+function console_description {
   echo "Launch the OpenShift console for current or given context"
 }
 
-function console-usage {
+function console_usage {
   errEcho "usage: $(basename ${0}) console [CONTEXT]"
   errEcho
-  errEcho "    $(console-description)"
+  errEcho "    $(console_description)"
   errEcho "    If the context matches a ClusterClaim, the kubeadmin password is copied to the clipboard"
   errEcho
   errEcho "    CONTEXT is the name of a kube context"
@@ -27,9 +27,14 @@ function console {
       console_url=$CLUSTERPOOL_CONSOLE
       ;;
     *)
+      if [[ -n $(getClusterClaim "$context") ]]
+      then
+        copyPW "$context"
+      fi
       console_url=https://$(sub oc --context $context -n openshift-console get route console -o jsonpath='{.spec.host}')
       ;;
   esac
   verbose 0 "Opening $console_url"
+  sleep 1
   open $console_url
 }

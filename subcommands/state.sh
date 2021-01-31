@@ -1,12 +1,12 @@
 # Command for checking the state of a cluster
-function state-description {
+function state_description {
   echo "Get the power state of a cluster"
 }
 
-function state-usage {
+function state_usage {
   errEcho "usage: $(basename ${0}) state [CONTEXT]"
   errEcho
-  errEcho "    $(state-description)"
+  errEcho "    $(state_description)"
   errEcho
   errEcho "    CONTEXT is the name of a kube context that matches a ClusterClaim"
   errEcho
@@ -25,7 +25,7 @@ function state {
       ;;
     *)
       clusterDeployment=$(getClusterDeployment $1 "required")
-      ocWithCMContext -n $clusterDeployment get ClusterDeployment $clusterDeployment -o custom-columns=PowerState:'.status.conditions[?(@.type=="Hibernating")].reason' --no-headers
+      ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment -o custom-columns=PowerState:'.status.conditions[?(@.type=="Hibernating")].reason' --no-headers
       ;;
   esac
 }

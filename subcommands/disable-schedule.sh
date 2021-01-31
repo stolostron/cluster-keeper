@@ -1,28 +1,28 @@
 # Command for disabling hibernation on a cluster
-function disable-schedule-description {
+function disable_schedule_description {
   echo "Disable scheduled hibernation/resumption for current or given cluster"
 }
 
-function disable-schedule-usage {
-  errEcho "usage: $(basename ${0}) disable-schedule [OPTIONS] [CONTEXT]"
+function disable_schedule_usage {
+  errEcho "usage: $(basename ${0}) disable_schedule [OPTIONS] [CONTEXT]"
   errEcho
-  errEcho "    $(disable-schedule-description)"
+  errEcho "    $(disable_schedule_description)"
   errEcho
   errEcho "    CONTEXT is the name of a kube context that matches a ClusterClaim"
   errEcho
   errEcho "    The following OPTIONS are available:"
   errEcho
-  errEcho "    -f    Force operation if cluster is currently held"
+  errEcho "    -f    Force operation if cluster is currently locked"
   errEcho
   abort
 }
 
-function disable-schedule {
+function disable_schedule {
   OPTIND=1
   while getopts :f o 
   do case "$o" in
-    f)  FORCE="true";;
-    [?]) usage;;
+    f)  export FORCE="true";;
+    [?]) disable_schedule_usage;;
     esac
   done
   shift $(($OPTIND - 1))
@@ -37,7 +37,7 @@ function disable-schedule {
       fatal "Cannot control hibernation for the ClusterPool host"
       ;;
     *)
-      disableSchedule $context $FORCE
+      disableSchedule $context
       ;;
   esac; 
 }

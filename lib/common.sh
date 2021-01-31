@@ -5,11 +5,13 @@ OUTPUT_VERBOSITY=3
 CLUSTER_WAIT_MAX=60
 HIBERNATE_WAIT_MAX=15
 
+VERIFIED_CONTEXTS=()
+
 CLUSTERCLAIM_CUSTOM_COLUMNS="\
 NAME:.metadata.name,\
 POOL:.spec.clusterPoolName,\
 CLUSTER:.spec.namespace,\
-HOLDS:.metadata.annotations.open-cluster-management\.io/cluster-manager-holds,\
+LOCKS:.metadata.annotations.open-cluster-management\.io/cluster-manager-locks,\
 SUBJECTS:.spec.subjects[*].name,\
 SCHEDULE:.metadata.annotations.open-cluster-management\.io/cluster-manager-hibernation,\
 LIFETIME:.spec.lifetime,\
@@ -50,12 +52,16 @@ function fatal {
   abort
 }
 
+# Use to silence output when not using "return" value from a function
+function ignoreOutput {
+  "$@" > /dev/null
+}
+
 # Use to log regular commands
 # - command is logged to stderr if VERBOSITY is COMMAND_VERBOSITY or higher
 # - command output is logged to stderr if VERBOSITY is OUTPUT_VERBOSITY or higher
 # - stderr is not suppressed; failure exits the script
 function cmd {
-  set -e
   logCommand "$@"
   OUTPUT=$("$@")
   logOutput "$OUTPUT"
@@ -79,7 +85,6 @@ function cmdTry {
 # - stderr is not suppressed; failure exits the script
 # - stdout is "returned"
 function sub {
-  set -e
   logCommand "$@"
   OUTPUT=$("$@")
   logOutput "$OUTPUT"
@@ -97,7 +102,7 @@ function subRC {
   RC=$?
   logOutput "$OUTPUT"
   set -e
-  echo $RC
+  echo -n $RC
 }
 
 # Use to log command substitutions, ignoring errors
@@ -168,6 +173,58 @@ EOF
   cmd oc login --token $token --server $CLUSTERPOOL_CLUSTER
 }
 
+# Sets up a context
+function createContext {
+  local context="$1"
+  verbose 0 "Creating context $context"
+
+  if [[ $context == cm ]]
+  then
+    createCMContext
+    return $?
+  fi
+
+  local kubeconfig
+  kubeconfig=$(getCredsFile "$context" "lifeguard/clusterclaims/${context}/kubeconfig" "true")
+  verbose 0 "Preparing kubeconfig $kubeconfig"
+  
+  # Rename admin context to match ClusterClaim name
+  oc --kubeconfig $kubeconfig config rename-context "$(KUBECONFIG=$kubeconfig oc config current-context)" "$context"
+  
+  # Export the client certificate and key to temporary files
+  local adminUserJson
+  adminUserJson=$(oc --kubeconfig $kubeconfig config view --flatten -o json | jq -r '.users[] | select(.name == "admin") | .user')
+  local clientCertificate=$(mktemp)
+  local clientKey=$(mktemp)
+  echo "$adminUserJson" | jq -r '.["client-certificate-data"]' | base64 --decode > "$clientCertificate"
+  echo "$adminUserJson" | jq -r '.["client-key-data"]' | base64 --decode > "$clientKey"
+  
+  # Create new user with name to match ClusterClaim, then clean up temp files
+  oc --kubeconfig $kubeconfig config set-credentials $context --client-certificate "$clientCertificate" --client-key "$clientKey"
+  
+  # Update context to use new user and delete old user
+  oc --kubeconfig $kubeconfig config set-context $context --user $context
+  oc --kubeconfig $kubeconfig config unset users.admin
+
+  local timestamp=$(date "+%s")
+  local user_kubeconfig="${HOME}/.kube/config"
+  local new_user_kubeconfig="${user_kubeconfig}.new"
+  local backup_user_kubeconfig="${user_kubeconfig}.backup-${timestamp}"
+  verbose 0 "Backing up $user_kubeconfig to $backup_user_kubeconfig"
+  cp "$user_kubeconfig" "$backup_user_kubeconfig"
+
+  # Remove pre-existing context and user from user kubeconfig
+  cmdTry oc config delete-context $context
+  cmdTry oc config unset users.${context}
+  
+  # Generate flattened config and delete temp files
+  KUBECONFIG="${user_kubeconfig}:${kubeconfig}" oc config view --flatten > "$new_user_kubeconfig"
+  rm "$clientCertificate" "$clientKey"
+  
+  mv "$new_user_kubeconfig" "$user_kubeconfig"
+  verbose 0 "${user_kubeconfig} updated with new context $context"
+}
+
 # Renames the current context to 'cm', making sure to use a ServiceAccount
 # Can use pre-existing account or create a new one
 function createCMContext {
@@ -190,28 +247,52 @@ function createCMContext {
   fi
 }
 
-# Verifies CM context is set up; runs only once per execution
-function verifyCMContext {
-  if [[ -z $CM_CONTEXT_VERIFIED && $(subRC oc config get-contexts cm) -ne 0  || $(subRC oc --context cm status) -ne 0 ]]
+# Verifies the given context is set up
+function verifyContext {
+  local context="$1"
+  verbose 1 "Verifying context $context"
+  local alreadyVerified=""
+  for i in "${VERIFIED_CONTEXTS[@]}"
+  do
+    if [[ $i == $context ]]
+    then
+      alreadyVerified="true"
+    fi
+  done
+  if [[ -z $alreadyVerified ]]
   then
-    createCMContext
+    verbose 1 "Context $context needs verification"
+    if [[ $(subRC oc config get-contexts "$context") -ne 0 && ("$context" == "cm" || -z $(getClusterClaim "$context")) ]]
+    then
+      createContext "$context"
+    elif [[ $(subRC oc config get-contexts "$context") -eq 0 && "$context" != "cm" && -n $(getClusterClaim "$context") ]]
+    then
+      # Wake up the cluster
+      ignoreOutput waitForClusterDeployment "$context" "Running"
+    fi
+
+    if [[ $(subRC oc config get-contexts "$context") -eq 0  && $(subRC oc --context "$context" status --request-timeout 5s) -eq 0 ]]
+    then
+      VERIFIED_CONTEXTS+="$context"
+    fi
   fi
-  export CM_CONTEXT_VERIFIED="true"
 }
 
-# Runs an oc command in the cluster manager context
-function ocWithCMContext {
-  verifyCMContext
-  sub oc --context cm "$@"
+# Runs an oc command in the given context
+function ocWithContext {
+  local context=$1
+  shift
+  verifyContext "$context"
+  sub oc --context "$context" "$@"
 }
 
-# Runs any command in the cluster manager context
-function withCMContext {
+# Runs any command the given context
+function withContext {
+  local context="$1"
+  shift
   local kubeconfig=$(mktemp)
-  ocWithCMContext config view --minify --flatten > $kubeconfig
-  export KUBECONFIG="$kubeconfig"
-  "$@"
-  unset KUBECONFIG
+  ocWithContext "$context" config view --minify --flatten > $kubeconfig
+  KUBECONFIG="$kubeconfig" "$@"
   rm "$kubeconfig"
 }
 
@@ -283,11 +364,39 @@ function dirSensitiveCmd {
   od
 }
 
+function getClusterClaim {
+  local name=$1
+  local required=$2
+  # Check for cluster claim only if context name does not contain / or :
+  if ! [[ "$name" =~ [/:] ]]
+  then
+    local clusterClaim
+    clusterClaim=$(subIf oc --context cm get ClusterClaim $name -o jsonpath='{.metadata.name}')
+  fi
+  if [[ -z $clusterClaim && -n $required ]]
+  then
+    fatal "ClusterClaim $name not found"
+  fi
+  echo "$clusterClaim"
+}
+
+function getClusterPool {
+  local clusterClaim=$1
+  local required=$2
+  local clusterPool
+  clusterPool=$(subIf oc --context cm get ClusterClaim $clusterClaim -o jsonpath='{.spec.clusterPoolName}')
+  if [[ -z $clusterPool && -n $required ]]
+  then
+    fatal "The ClusterClaim $clusterClaim does not have a ClusterPool"
+  fi
+  echo $clusterDeployment
+}
+
 function getClusterDeployment {
   local clusterClaim=$1
   local required=$2
   local clusterDeployment
-  clusterDeployment=$(ocWithCMContext get ClusterClaim $clusterClaim -o jsonpath='{.spec.namespace}')
+  clusterDeployment=$(subIf oc --context cm get ClusterClaim $clusterClaim -o jsonpath='{.spec.namespace}')
   if [[ -z $clusterDeployment && -n $required ]]
   then
     fatal "The ClusterClaim $clusterClaim has not been assigned a ClusterDeployment"
@@ -296,12 +405,15 @@ function getClusterDeployment {
 }
 
 function waitForClusterDeployment {
+  local clusterClaim=$1
+  local running=$2
+
   # Verify that the claim exists and wait for ClusterDeployment
   local count=0
   until [[ -n "$clusterDeployment" || $count -gt $CLUSTER_WAIT_MAX ]]
   do
     local clusterDeployment
-    clusterDeployment=$(ocWithCMContext get ClusterClaim $1 -o jsonpath='{.spec.namespace}')
+    clusterDeployment=$(ocWithContext cm get ClusterClaim "$clusterClaim" -o jsonpath='{.spec.namespace}')
     count=$(($count + 1))
 
     if [[ -z $clusterDeployment && $count -le $CLUSTER_WAIT_MAX ]]
@@ -311,48 +423,79 @@ function waitForClusterDeployment {
     fi
   done
 
+
+  if [[ -n "$running" ]]
+  then
+    # Check if cluster is hibernating and resume if needed
+    local powerState=$(ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment -o json | jq -r '.spec.powerState')
+    if [[ $powerState != "Running" ]]
+    then
+      setPowerState $clusterClaim "Running"
+    fi
+
+    # Wait for cluster to be running and reachable
+    local conditionsJson
+    conditionsJson=$(ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment -o json  | jq -r '.status.conditions')
+    local hibernating=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Hibernating") | .status')
+    local unreachable=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Unreachable") | .status')
+
+    local count=0
+    until [[ $count -gt $HIBERNATE_WAIT_MAX || ($hibernating == "False" && $unreachable == "False") ]]
+    do
+      conditionsJson=$(ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment -o json  | jq -r '.status.conditions')
+      hibernating=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Hibernating") | .status')
+      unreachable=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Unreachable") | .status')
+      count=$(($count + 1))
+
+      if [[ $count -le $HIBERNATE_WAIT_MAX && ($hibernating == "True" && $unreachable == "True") ]]
+      then
+        verbose 0 "Waiting up to $HIBERNATE_WAIT_MAX min for ClusterDeployment to be running and reachable ($count/$HIBERNATE_WAIT_MAX)..."
+        sleep 60
+      fi
+    done
+  fi
+
   echo $clusterDeployment
 }
 
 function getHibernation {
-  ocWithCMContext get ClusterClaim $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-manager-hibernation}'
+  ocWithContext cm get ClusterClaim $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-manager-hibernation}'
 }
 
-function getHolds {
-  ocWithCMContext get ClusterClaim $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-manager-holds}'
+function getLocks {
+  ocWithContext cm get ClusterClaim $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-manager-locks}'
 }
 
-function checkHolds {
-  holds=$(getHolds $1)
-  if [[ -n $holds ]]
+function checkLocks {
+  locks=$(getLocks $1)
+  if [[ -n $locks ]]
   then
-    verbose 0 "Cluster is held by: $holds"
-    fatal "Cannot operate on held cluster; use -f to force"
+    verbose 0 "Cluster is locked by: $locks"
+    if [[ -z $FORCE ]]
+    then
+      fatal "Cannot operate on locked cluster; use -f to force"
+    fi
   fi
 }
 
 function setPowerState {
   local claim=$1
   local state=$2
-  local force=$3
   clusterDeployment=$(getClusterDeployment $claim "required")
-  if [[ -z $force ]]
-  then
-    checkHolds $claim
-  fi
   verbose 0 "Setting power state to $state on ClusterDeployment $clusterDeployment"
+  checkLocks $claim
+  
   local deploymentPatch=$(cat << EOF
 - op: add
   path: /spec/powerState
   value: $state
 EOF
   )
-  ocWithCMContext -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch" > /dev/null
+  ignoreOutput ocWithContext cm -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
 }
 
 function enableServiceAccounts {
   local claim=$1
-  verifyCMContext
   claimServiceAccountSubjects=$(sub oc --context cm get ClusterClaim $claim -o json | jq -r ".spec.subjects | map(select(.name == \"system:serviceaccounts:${CLUSTERPOOL_TARGET_NAMESPACE}\")) | length")
   if [[ $claimServiceAccountSubjects -le 0 ]]
   then
@@ -370,23 +513,38 @@ EOF
   fi
 }
 
+function enableHibernation {
+  local claim=$1
+  local hibernateValue=$2
+
+  if [[ -z $hibernateValue ]]
+  then
+    hibernateValue="true"
+  fi
+
+  local clusterDeployment
+  clusterDeployment=$(waitForClusterDeployment $claim)
+  
+  local deploymentPatch=$(cat << EOF
+- op: add
+  path: /metadata/labels/hibernate
+  value: "$hibernateValue"
+EOF
+  )
+  verbose 1 "Opting-in for hibernation on ClusterDeployment $clusterDeployment with hibernate=$hibernateValue"
+  cmd oc --context cm  -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
+}
+
 function enableSchedule {
   local claim=$1
   local force=$2
-  local clusterDeployment
-  clusterDeployment=$(waitForClusterDeployment $claim)
 
   if [[ -z $force ]]
   then
-    checkHolds $claim
+    checkLocks $claim
   fi
 
   verbose 0 "Enabling scheduled hibernation/resumption for $claim"
-  local hibernateValue="true"
-  if [[ -n $(getHolds $claim) ]]
-  then
-    hibernateValue="skip"
-  fi
 
   local ensureAnnotations=$(cat << EOF
 - op: test
@@ -407,25 +565,37 @@ EOF
   cmdTry oc --context cm patch ClusterClaim $claim --type json --patch "$ensureAnnotations"
   cmd oc --context cm patch ClusterClaim $claim --type json --patch "$claimPatch"
   
+  local hibernateValue="true"
+  if [[ -n $(getLocks $claim) ]]
+  then
+    hibernateValue="skip"
+  fi
+  enableHibernation $claim $hibernateValue
+}
+
+function disableHibernation {
+  local claim=$1
+
+  local clusterDeployment
+  clusterDeployment=$(waitForClusterDeployment $claim)
+  
   local deploymentPatch=$(cat << EOF
 - op: add
   path: /metadata/labels/hibernate
-  value: "$hibernateValue"
+  value: "skip"
 EOF
   )
-  verbose 1 "Opting-in for hibernation on ClusterDeployment $clusterDeployment"
-  cmd oc --context cm  -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
+  verbose 1 "Opting-out for hibernation on ClusterDeployment $clusterDeployment"
+  cmd oc --context cm -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
 }
 
 function disableSchedule {
   local claim=$1
   local force=$2
-  local clusterDeployment
-  clusterDeployment=$(waitForClusterDeployment $claim)
 
   if [[ -z $force ]]
   then
-    checkHolds $claim
+    checkLocks $claim
   fi
 
   verbose 0 "Disabling scheduled hibernation/resumption for $claim"
@@ -437,41 +607,91 @@ EOF
   verbose 1 "Removing annotation on ClusterClaim $claim"
   cmdTry oc --context cm patch ClusterClaim $claim --type json --patch "$removeAnnotation"
 
-  local deploymentPatch=$(cat << EOF
-- op: add
-  path: /metadata/labels/hibernate
-  value: "skip"
-EOF
-  )
-  verbose 1 "Opting-out for hibernation on ClusterDeployment $clusterDeployment"
-  cmd oc --context cm  -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
+  disableHibernation $claim
 }
 
-function addHold {
-  notImplemented
+function getLockId {
+  local lockId="$1"
+  if [[ -z "$lockId" ]]
+  then
+    lockId=$(ocWithContext cm whoami | rev | cut -d : -f 1 | rev)
+  fi
+  echo "$lockId"
 }
 
-function releaseHold {
-  notImplemented
+function addLock {
+  local context="$1"
+  local lockId=$(getLockId "$2")
+  verbose 0 "Adding lock on $context for $lockId"
+
+  ocWithContext cm get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= (split(\",\") + [\"$lockId\"] | unique | join(\",\"))" | ocWithContext cm replace -f -
+  disableHibernation $context
+}
+
+function removeLock {
+  local context="$1"
+  local lockId=$(getLockId "$2")
+  local allLocks="$3"
+  if [[ -n "$allLocks" ]]
+  then
+    verbose 0 "Removing all locks on $context"
+    ocWithContext cm get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= \"\"" | ocWithContext cm replace -f -
+  else
+    verbose 0 "Removing lock on $context for $lockId"
+    ocWithContext cm get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= (split(\",\") - [\"$lockId\"] | unique | join(\",\"))"   | ocWithContext cm replace -f -
+  fi
+  local locks=$(getLocks $1)
+  if [[ -n $locks ]]
+  then
+    verbose 0 "Current locks: $locks"
+  else
+    local hibernation=$(getHibernation $context)
+    local hibernateValue="true"
+    if [[ $hibernation != "true" ]]
+    then
+      hibernateValue="skip"
+    fi
+    enableHibernation $context $hibernateValue
+    verbose 0 "No locks remain. You may want to hibernate the cluster."
+  fi
+}
+
+function getCredsFile {
+  local context=$1
+  local filename=$2
+  local fetch_fresh=$3
+  local credsFile=$(subIf dependencyFile "$filename")
+  if [[ -z "$credsFile" || -n "$fetch_fresh" ]]
+  then
+    getCreds "$context"
+    credsFile=$(subIf dependencyFile "$filename")
+  fi
+  echo "$credsFile"
+}
+
+function copyPW {
+  local context=$1
+  local fetch_fresh=$2
+  local credsFile
+  credsFile=$(getCredsFile "$context" "lifeguard/clusterclaims/${context}/${context}.creds.json" "$fetch_fresh")
+  local username=$(cat "$credsFile" | jq -r '.username')
+  cat "$credsFile" | jq -j '.password' | pbcopy
+  verbose 0 "Password for $username copied to clipboard"
 }
 
 function displayCreds {
   local context=$1
   local fetch_fresh=$2
-  local credsFile=$(subIf dependencyFile lifeguard/clusterclaims/${1}/${1}.creds.json)
-  if [[ -z "$credsFile" || -n "$fetch_fresh" ]]
-  then
-    getCreds $@
-    credsFile=$(subIf dependencyFile lifeguard/clusterclaims/${1}/${1}.creds.json)
-  fi
+  local credsFile
+  credsFile=$(getCredsFile "$context" "lifeguard/clusterclaims/${context}/${context}.creds.json" "$fetch_fresh")
   cat "$credsFile"
 }
 
 function getCreds {
-  waitForClusterDeployment $1 > /dev/null
-
+  ignoreOutput waitForClusterDeployment $1 "Running"
+  verbose 0 "Fetching credentials for ${1}"
   # Use lifeguard/clusterclaims/get_credentials.sh to get the credentionals for the cluster
   export CLUSTERCLAIM_NAME=$1
   export CLUSTERPOOL_TARGET_NAMESPACE
-  withCMContext dirSensitiveCmd $(dependency lifeguard/clusterclaims/get_credentials.sh)
+  ignoreOutput withContext cm dirSensitiveCmd $(dependency lifeguard/clusterclaims/get_credentials.sh)
 }

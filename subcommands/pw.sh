@@ -1,12 +1,12 @@
-# Command for displaying credentials and other information
-function creds_description {
-  echo "Display credentials for a cluster"
+# Command for copying cluster password to clipboard
+function pw_description {
+  echo "Copies cluster password to clipboard"
 }
 
-function creds_usage {
-  errEcho "usage: $(basename ${0}) creds [OPTIONS] [CONTEXT]"
+function pw_usage {
+  errEcho "usage: $(basename ${0}) pw [OPTIONS] [CONTEXT]"
   errEcho
-  errEcho "    $(creds_description)"
+  errEcho "    $(pw_description)"
   errEcho "    CAUTION: This will display the admin password."
   errEcho
   errEcho "    CONTEXT is the name of a kube context that matches a ClusterClaim"
@@ -18,7 +18,7 @@ function creds_usage {
   abort
 }
 
-function creds {
+function pw {
   OPTIND=1
   while getopts :r o 
   do case "$o" in
@@ -35,10 +35,10 @@ function creds {
   fi
   case $context in
     cm)
-      fatal "Cannot display credentials for the ClusterPool host"
+      fatal "Cannot copy password for the ClusterPool host"
       ;;
     *)
-      displayCreds $context $FETCH_FRESH
+      copyPW $context $FETCH_FRESH
       ;;
   esac
 }
