@@ -14,7 +14,7 @@ function new_usage {
   errEcho "    The following OPTIONS are available:"
   errEcho
   errEcho "    -l    Lifetime of the cluster in hours"
-  errEcho "    -m    Manual power management; do not configure for hibernation"
+  errEcho "    -m    Manual power management; do not enable scheduled hibernation"
   errEcho
   abort
 }
@@ -46,9 +46,9 @@ function new {
   withContext cm dirSensitiveCmd $(dependency lifeguard/clusterclaims/apply.sh) << EOF
 N
 EOF
-  
+
   enableServiceAccounts $2
-  if [[ -z $MANUAL_POWER && $AUTO_HIBERNATION = "true" ]]
+  if [[ -z $MANUAL_POWER && $AUTO_HIBERNATION == "true" ]]
   then
     enableSchedule $2
   else
