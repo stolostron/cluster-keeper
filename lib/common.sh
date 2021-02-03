@@ -293,6 +293,7 @@ function withContext {
   local kubeconfig=$(mktemp)
   ocWithContext "$context" config view --minify --flatten > $kubeconfig
   KUBECONFIG="$kubeconfig" "$@"
+  unset KUBECONFIG
   rm "$kubeconfig"
 }
 
@@ -509,7 +510,7 @@ function enableServiceAccounts {
     name: system:serviceaccounts:$CLUSTERPOOL_TARGET_NAMESPACE
 EOF
     )
-    cmd oc --context cm  patch ClusterClaim $claim --type json --patch "$claimPatch"
+    cmd oc --context cm patch ClusterClaim $claim --type json --patch "$claimPatch"
   fi
 }
 
