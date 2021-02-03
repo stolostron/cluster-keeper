@@ -189,7 +189,7 @@ function createContext {
   verbose 0 "Preparing kubeconfig $kubeconfig"
   
   # Rename admin context to match ClusterClaim name
-  oc --kubeconfig $kubeconfig config rename-context "$(KUBECONFIG=$kubeconfig oc config current-context)" "$context"
+  cmd oc --kubeconfig $kubeconfig config rename-context "$(KUBECONFIG=$kubeconfig oc config current-context)" "$context"
   
   # Export the client certificate and key to temporary files
   local adminUserJson
@@ -200,11 +200,11 @@ function createContext {
   echo "$adminUserJson" | jq -r '.["client-key-data"]' | base64 --decode > "$clientKey"
   
   # Create new user with name to match ClusterClaim, then clean up temp files
-  oc --kubeconfig $kubeconfig config set-credentials $context --client-certificate "$clientCertificate" --client-key "$clientKey"
+  cmd oc --kubeconfig $kubeconfig config set-credentials $context --client-certificate "$clientCertificate" --client-key "$clientKey"
   
   # Update context to use new user and delete old user
-  oc --kubeconfig $kubeconfig config set-context $context --user $context
-  oc --kubeconfig $kubeconfig config unset users.admin
+  cmd oc --kubeconfig $kubeconfig config set-context $context --user $context
+  cmd oc --kubeconfig $kubeconfig config unset users.admin
 
   local timestamp=$(date "+%s")
   local user_kubeconfig="${HOME}/.kube/config"
@@ -262,7 +262,7 @@ function verifyContext {
   if [[ -z $alreadyVerified ]]
   then
     verbose 1 "Context $context needs verification"
-    if [[ $(subRC oc config get-contexts "$context") -ne 0 && ("$context" == "cm" || -z $(getClusterClaim "$context")) ]]
+    if [[ $(subRC oc config get-contexts "$context") -ne 0 && ("$context" == "cm" || -n $(getClusterClaim "$context")) ]]
     then
       createContext "$context"
     elif [[ $(subRC oc config get-contexts "$context") -eq 0 && "$context" != "cm" && -n $(getClusterClaim "$context") ]]
@@ -624,7 +624,7 @@ function addLock {
   local lockId=$(getLockId "$2")
   verbose 0 "Adding lock on $context for $lockId"
 
-  ocWithContext cm get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= (split(\",\") + [\"$lockId\"] | unique | join(\",\"))" | ocWithContext cm replace -f -
+  ocWithContext cm get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= (. // \"\" | split(\",\") + [\"$lockId\"] | unique | join(\",\"))" | ocWithContext cm replace -f -
   disableHibernation $context
 }
 
@@ -638,7 +638,7 @@ function removeLock {
     ocWithContext cm get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= \"\"" | ocWithContext cm replace -f -
   else
     verbose 0 "Removing lock on $context for $lockId"
-    ocWithContext cm get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= (split(\",\") - [\"$lockId\"] | unique | join(\",\"))"   | ocWithContext cm replace -f -
+    ocWithContext cm get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= (. // \"\" | split(\",\") - [\"$lockId\"] | unique | join(\",\"))"   | ocWithContext cm replace -f -
   fi
   local locks=$(getLocks $1)
   if [[ -n $locks ]]

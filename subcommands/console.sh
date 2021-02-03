@@ -31,6 +31,7 @@ function console {
       then
         copyPW "$context"
       fi
+      verifyContext "$context"
       console_url=https://$(sub oc --context $context -n openshift-console get route console -o jsonpath='{.spec.host}')
       ;;
   esac

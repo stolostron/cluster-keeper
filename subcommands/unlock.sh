@@ -1,9 +1,9 @@
 # Command for unlocking a cluster
-function lock_description {
+function unlock_description {
   echo "Unlock a cluster"
 }
 
-function hibernate_usage {
+function unlock_usage {
   errEcho "usage: $(basename ${0}) unlock [OPTIONS] [CONTEXT]"
   errEcho
   errEcho "    $(unlock_description)"

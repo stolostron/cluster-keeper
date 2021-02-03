@@ -2,6 +2,22 @@
 
 Cluster Manager provides a CLI for managing squad usage of multiple OpenShift clusters via Hive `ClusterPools` and `ClusterClaims`.
 
+## Installation
+
+1. Clone the repository.
+   ```
+   git clone git@github.com:open-cluster-management/cluster-manager.git
+   ```
+1. Create a personal configuration file by copying one of the defaults provided.
+   ```
+   cd cluster-manager
+   cp user.app-squad user.env
+   ```
+1. (Optional) Create a symlink to `cm` on your path.
+   ```
+   ln -s $(pwd)/cm ~/bin/cm
+   ```
+
 ## Scenarios
 
 ### Day 1
