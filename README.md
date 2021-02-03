@@ -1,10 +1,24 @@
 # Cluster Manager
 
-Cluster Manager provides a CLI for managing squad usage of multiple OpenShift clusters via Hive `ClusterPools` and `ClusterClaims`.
+Cluster Manager provides a CLI for managing squad usage of multiple OpenShift clusters via [Hive](https://github.com/openshift/hive) `ClusterPools`, `ClusterClaims`, and `ClusterDeployments`. It is compatible with scheduled hibernation provided by [hibernate-cronjob](https://github.com/open-cluster-management/hibernate-cronjob).
+
+With the `cm` CLI you can:
+- List and get ClusterPools, ClusterClaims, and ClusterDeployments
+- Create and delete clusters
+- Run and hibernate clusters manually
+- Lock clusters to temporarily disable scheduled hibernation and other disruptive actions
+- Switch your kube context between clusters or run a single command in a given context
+- Launch the OpenShift or Advanced Cluster Management consoles and have the password automatically copied to the clipboard for easy log-in
+
+When any command requires communication with a cluster, Cluster Manager will resume the cluster if it is currently hibernating (unless it is currently locked).
+
+Except for the `cm use` command, Cluster Manager will never change your current kube context. But Cluster Manager creates a context for each cluster named according to the ClusterClaim. For any command that takes the name of a ClusterClaim, Cluster Manager will infer it from the current context if it is not provided.
+
+Cluster Manager leverages [Lifeguard](https://github.com/open-cluster-management/lifeguard) for many functions, but it sets the environment variables for you and does not require you to change directories.
 
 ## Installation
 
-1. Clone the repository.
+1. Clone the repository. For example:
    ```
    git clone git@github.com:open-cluster-management/cluster-manager.git
    ```
@@ -13,21 +27,24 @@ Cluster Manager provides a CLI for managing squad usage of multiple OpenShift cl
    cd cluster-manager
    cp user.app-squad user.env
    ```
-1. (Optional) Create a symlink to `cm` on your path.
+1. (_Optional, but highly recommended_) Create a symlink to `cm` on your path. For example:
    ```
-   ln -s $(pwd)/cm ~/bin/cm
+   ln -s $(pwd)/cm /usr/local/bin/cm
    ```
+1. Make sure you have all the [dependencies](#dependencies).
 
-## Scenarios
+## Dependencies
 
-### Day 1
+- `bash` 
+   - version 4 or newer
+   - on macOS with [Homebrew](https://brew.sh/) installed, run `brew install bash`. This bash must be first in your path, but need not be `/bin/bash` or your default login shell.
+- `oc`
+- `jq`
+  - on macOS with [Homebrew](https://brew.sh/) installed, run `brew install jq`
+- `gsed`
+  - required by [Lifeguard](https://github.com/open-cluster-management/lifeguard) for macOS only
+  - with [Homebrew](https://brew.sh/) installed, run `brew install gnu-sed`
+- Other projects from the `open-cluster-management` organization. (If you have `git` configured for CLI access, these will be automatically cloned to the `dependencies/` directory. Otherwise, you can manually clone these projects to the same directory where you cloned `cluster-manager`.)
+  - [Lifeguard](https://github.com/open-cluster-management/lifeguard)
 
-Roke clones the repository and changes to his local directory. He creates a symlink to the `cm` script from a directory on his path so he can use the CLI from any working directory.
-```
-ln -s $(pwd)/cm ~/bin/cm
-```
 
-Roke needs exclusive access to two clusters for his development work. First he checks which pools are available.
-```
-cm list pools
-```
