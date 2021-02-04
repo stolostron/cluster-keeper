@@ -268,19 +268,31 @@ function verifyContext {
   if [[ -z $alreadyVerified ]]
   then
     verbose 1 "Context $context needs verification"
-    if [[ $(subRC oc config get-contexts "$context") -ne 0 && ("$context" == "cm" || -n $(getClusterClaim "$context")) ]]
+    if [[ $(subRC oc config get-contexts "$context") -ne 0 ]]
     then
-      createContext "$context"
-    elif [[ $(subRC oc config get-contexts "$context") -eq 0 && "$context" != "cm" && -n $(getClusterClaim "$context") ]]
-    then
-      # Wake up the cluster
-      ignoreOutput waitForClusterDeployment "$context" "Running"
+      # context does not exist; try to create it if it is 'cm' or corresponds to a ClusterClaim
+      if [[ "$context" == "cm" || -n $(getClusterClaim "$context") ]]
+      then
+        createContext "$context"
+      fi
+    else
+      if [[ "$context" != "cm" && -n $(getClusterClaim "$context") ]]
+      then
+        # Make sure cluster is running
+        ignoreOutput waitForClusterDeployment "$context" "Running"
+      fi
+
+      if [[ $(subRC oc --context "$context" status --request-timeout 5s) -ne 0 ]]
+      then
+        # context may be out-of-date
+        createContext "$context"
+      fi
     fi
 
-    if [[ $(subRC oc config get-contexts "$context") -eq 0  && $(subRC oc --context "$context" status --request-timeout 5s) -eq 0 ]]
-    then
-      VERIFIED_CONTEXTS+="$context"
-    fi
+    # Context should now exist and be reachable; fail otherwise
+    ignoreOutput oc config get-contexts "$context"
+    ignoreOutput oc --context "$context" status --request-timeout 5s
+    VERIFIED_CONTEXTS+="$context"
   fi
 }
 
