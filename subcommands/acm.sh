@@ -21,12 +21,12 @@ function acm {
   then
     context=$(current)
   fi
+  verifyContext $context
   if [[ -n $(getClusterClaim "$context") ]]
   then
     copyPW "$context"
   fi
   local acm_url
-  verifyContext $context
   acm_url=https://$(sub oc --context $context -n open-cluster-management get route multicloud-console -o jsonpath='{.spec.host}')
   verbose 0 "Opening $acm_url"
   sleep 1
