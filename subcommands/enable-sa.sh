@@ -4,7 +4,7 @@ function enable_sa_description {
 }
 
 function enable_sa_usage {
-  errEcho "usage: $(basename ${0}) enable_sa [OPTIONS] [CONTEXT]"
+  errEcho "usage: $(basename ${0}) enable-sa [OPTIONS] [CONTEXT]"
   errEcho
   errEcho "    $(enable_sa_description)"
   errEcho "    Run if you do not have permission to edit the ClusterDeployment for a ClusterClaim"

@@ -1,6 +1,6 @@
 # Command for copying cluster password to clipboard
 function pw_description {
-  echo "Copies cluster password to clipboard"
+  echo "Copy a cluster password to the clipboard"
 }
 
 function pw_usage {

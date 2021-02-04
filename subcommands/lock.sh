@@ -3,7 +3,7 @@ function lock_description {
   echo "Lock a cluster"
 }
 
-function hibernate_usage {
+function lock_usage {
   errEcho "usage: $(basename ${0}) lock [OPTIONS] [CONTEXT]"
   errEcho
   errEcho "    $(lock_description)"

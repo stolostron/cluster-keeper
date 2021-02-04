@@ -4,7 +4,7 @@ function enable_schedule_description {
 }
 
 function enable_schedule_usage {
-  errEcho "usage: $(basename ${0}) enable_schedule [OPTIONS] [CONTEXT]"
+  errEcho "usage: $(basename ${0}) enable-schedule [OPTIONS] [CONTEXT]"
   errEcho
   errEcho "    $(enable_schedule_description)"
   errEcho

@@ -4,7 +4,7 @@ function disable_schedule_description {
 }
 
 function disable_schedule_usage {
-  errEcho "usage: $(basename ${0}) disable_schedule [OPTIONS] [CONTEXT]"
+  errEcho "usage: $(basename ${0}) disable-schedule [OPTIONS] [CONTEXT]"
   errEcho
   errEcho "    $(disable_schedule_description)"
   errEcho

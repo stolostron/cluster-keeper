@@ -47,4 +47,8 @@ Cluster Manager leverages [Lifeguard](https://github.com/open-cluster-management
 - Other projects from the `open-cluster-management` organization. (If you have `git` configured for CLI access, these will be automatically cloned to the `dependencies/` directory. Otherwise, you can manually clone these projects to the same directory where you cloned `cluster-manager`.)
   - [Lifeguard](https://github.com/open-cluster-management/lifeguard)
 
+## Usage
 
+Online help is available directly from the CLI using the global `-h` option.
+
+[View Usage](./USAGE.md)
