@@ -1,6 +1,6 @@
-# Command for viewing current kube context
+# Command for viewing current kubeconfig context
 function current_description {
-  echo "Display the current kube context"
+  echo "Display the current kubeconfig context"
 }
 
 function current_usage {

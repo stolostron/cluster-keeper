@@ -7,12 +7,12 @@ With the `cm` CLI you can:
 - Create and delete clusters
 - Run and hibernate clusters manually
 - Lock clusters to temporarily disable scheduled hibernation and other disruptive actions
-- Switch your kube context between clusters or run a single command in a given context
+- Switch your kubeconfig context between clusters or run a single command in a given context
 - Launch the OpenShift or Advanced Cluster Management consoles and have the password automatically copied to the clipboard for easy log-in
 
 When any command requires communication with a cluster, Cluster Manager will resume the cluster if it is currently hibernating (unless it is currently locked).
 
-Except for the `cm use` command, Cluster Manager will never change your current kube context. But Cluster Manager creates a context for each cluster named according to the ClusterClaim. For any command that takes the name of a ClusterClaim, Cluster Manager will infer it from the current context if it is not provided.
+Except for the `cm use` command, Cluster Manager will never change your current kubeconfig context. But Cluster Manager creates a context for each cluster named according to the ClusterClaim. For any command that takes the name of a ClusterClaim, Cluster Manager will infer it from the current context if it is not provided.
 
 Cluster Manager leverages [Lifeguard](https://github.com/open-cluster-management/lifeguard) for many functions, but it sets the environment variables for you and does not require you to change directories.
 

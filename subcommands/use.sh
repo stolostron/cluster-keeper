@@ -1,6 +1,6 @@
 # Command for switching contexts
 function use_description {
-  echo "Switch kube context"
+  echo "Switch kubeconfig context"
 }
 
 function use_usage {
@@ -10,7 +10,7 @@ function use_usage {
   errEcho "    If the context matches a ClusterClaim and the cluster is currently"
   errEcho "    hibernating, it is resumed"
   errEcho
-  errEcho "    CONTEXT is the name of a kube context"
+  errEcho "    CONTEXT is the name of a kubeconfig context"
   errEcho "        'cm' context refers to the ClusterPool host"
   errEcho
   errEcho "    -f    Force operation if cluster is currently locked"

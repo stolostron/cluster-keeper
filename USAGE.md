@@ -35,7 +35,7 @@ usage: cm [OPTIONS] SUBCOMMAND
     creds
         Display credentials for a cluster
     current
-        Display the current kube context
+        Display the current kubeconfig context
     delete
         Delete a cluster by deleting its ClusterClaim
     disable-schedule
@@ -63,7 +63,7 @@ usage: cm [OPTIONS] SUBCOMMAND
     unlock
         Unlock a cluster
     use
-        Switch kube context
+        Switch kubeconfig context
     with
         Run any command with the given context
 
@@ -81,7 +81,7 @@ usage: cm acm [CONTEXT]
     Launch the ACM console for current or given context
     If the context matches a ClusterClaim, the kubeadmin password is copied to the clipboard
 
-    CONTEXT is the name of a kube context
+    CONTEXT is the name of a kubeconfig context
         'cm' context refers to the ClusterPool host
 ```
 <sup><sub>[🔝 Back to top](#usage)</sub></sup>
@@ -93,7 +93,7 @@ usage: cm console [CONTEXT]
     Launch the OpenShift console for current or given context
     If the context matches a ClusterClaim, the kubeadmin password is copied to the clipboard
 
-    CONTEXT is the name of a kube context
+    CONTEXT is the name of a kubeconfig context
         'cm' context refers to the ClusterPool host
 ```
 <sup><sub>[🔝 Back to top](#usage)</sub></sup>
@@ -105,7 +105,7 @@ usage: cm creds [OPTIONS] [CONTEXT]
     Display credentials for a cluster
     CAUTION: This will display the admin password.
 
-    CONTEXT is the name of a kube context that matches a ClusterClaim
+    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim
 
     The following OPTIONS are available:
 
@@ -117,7 +117,7 @@ usage: cm creds [OPTIONS] [CONTEXT]
 ```
 usage: cm current
 
-    Display the current kube context
+    Display the current kubeconfig context
 ```
 <sup><sub>[🔝 Back to top](#usage)</sub></sup>
 
@@ -127,7 +127,7 @@ usage: cm delete [OPTIONS] [CONTEXT]
 
     Delete a cluster by deleting its ClusterClaim
 
-    CONTEXT is the name of a kube context that matches a ClusterClaim
+    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim
 
     The following OPTIONS are available:
 
@@ -142,7 +142,7 @@ usage: cm disable-schedule [OPTIONS] [CONTEXT]
 
     Disable scheduled hibernation/resumption for current or given cluster
 
-    CONTEXT is the name of a kube context that matches a ClusterClaim
+    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim
 
     The following OPTIONS are available:
 
@@ -157,7 +157,7 @@ usage: cm enable-sa [OPTIONS] [CONTEXT]
     Enable namespace service accounts for current or given cluster
     Run if you do not have permission to edit the ClusterDeployment for a ClusterClaim
 
-    CONTEXT is the name of a kube context that matches a ClusterClaim
+    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim
 ```
 <sup><sub>[🔝 Back to top](#usage)</sub></sup>
 
@@ -167,7 +167,7 @@ usage: cm enable-schedule [OPTIONS] [CONTEXT]
 
     Enable scheduled hibernation/resumption for current or given cluster
 
-    CONTEXT is the name of a kube context that matches a ClusterClaim
+    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim
 
     The following OPTIONS are available:
 
@@ -188,7 +188,7 @@ usage: cm get pool|claim|cluster [NAME] [ARGS]
     cluster (cd, ClusterDeployment)
 
     NAME is the name of the resource or the related ClusterClaim
-        if omitted, the current kube context is used if it matches a ClusterClaim
+        if omitted, the current kubeconfig context is used if it matches a ClusterClaim
     ARGS are additional args passed through to 'oc get' such as '-o yaml'
 ```
 <sup><sub>[🔝 Back to top](#usage)</sub></sup>
@@ -199,7 +199,7 @@ usage: cm hibernate [CONTEXT]
 
     Hibernate a cluster
 
-    CONTEXT is the name of a kube context that matches a ClusterClaim
+    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim
 
     The following OPTIONS are available:
 
@@ -230,7 +230,7 @@ usage: cm lock [OPTIONS] [CONTEXT]
     Other users are prevented from running certain subcommands on locked
     clusters, like 'cm run', 'cm hibernate', and 'cm delete'
 
-    CONTEXT is the name of a kube context that matches a ClusterClaim
+    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim
 
     The following OPTIONS are available:
 
@@ -261,7 +261,7 @@ usage: cm pw [OPTIONS] [CONTEXT]
     Copy a cluster password to the clipboard
     CAUTION: This will display the admin password.
 
-    CONTEXT is the name of a kube context that matches a ClusterClaim
+    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim
 
     The following OPTIONS are available:
 
@@ -275,7 +275,7 @@ usage: cm run [CONTEXT]
 
     Resume a hibernating cluster
 
-    CONTEXT is the name of a kube context that matches a ClusterClaim
+    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim
 
     The following OPTIONS are available:
 
@@ -289,7 +289,7 @@ usage: cm state [CONTEXT]
 
     Get the power state of a cluster
 
-    CONTEXT is the name of a kube context that matches a ClusterClaim
+    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim
 ```
 <sup><sub>[🔝 Back to top](#usage)</sub></sup>
 
@@ -301,7 +301,7 @@ usage: cm unlock [OPTIONS] [CONTEXT]
     Removes a lock from a cluster
     If you remove the last lock, you may wish to hibernate the cluster
 
-    CONTEXT is the name of a kube context that matches a ClusterClaim
+    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim
 
     The following OPTIONS are available:
 
@@ -314,11 +314,11 @@ usage: cm unlock [OPTIONS] [CONTEXT]
 ```
 usage: cm use CONTEXT
 
-    Switch kube context
+    Switch kubeconfig context
     If the context matches a ClusterClaim and the cluster is currently
     hibernating, it is resumed
 
-    CONTEXT is the name of a kube context
+    CONTEXT is the name of a kubeconfig context
         'cm' context refers to the ClusterPool host
 
     -f    Force operation if cluster is currently locked
@@ -333,7 +333,7 @@ usage: cm with CONTEXT COMMAND
     If the context matches a ClusterClaim and the cluster is currently
     hibernating, it is resumed
 
-    CONTEXT is the name of a kube context
+    CONTEXT is the name of a kubeconfig context
         'cm' context refers to the ClusterPool host
     COMMAND is any command, such as a script that invokes oc or kubectl
 

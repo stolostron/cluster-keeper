@@ -15,7 +15,7 @@ function get_usage {
   errEcho "    cluster (cd, ClusterDeployment)"
   errEcho
   errEcho "    NAME is the name of the resource or the related ClusterClaim"
-  errEcho "        if omitted, the current kube context is used if it matches a ClusterClaim"
+  errEcho "        if omitted, the current kubeconfig context is used if it matches a ClusterClaim"
   errEcho "    ARGS are additional args passed through to 'oc get' such as '-o yaml'"
   errEcho
   abort

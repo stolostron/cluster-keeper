@@ -8,7 +8,7 @@ function enable_schedule_usage {
   errEcho
   errEcho "    $(enable_schedule_description)"
   errEcho
-  errEcho "    CONTEXT is the name of a kube context that matches a ClusterClaim"
+  errEcho "    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim"
   errEcho
   errEcho "    The following OPTIONS are available:"
   errEcho

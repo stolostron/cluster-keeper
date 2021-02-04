@@ -9,7 +9,7 @@ function pw_usage {
   errEcho "    $(pw_description)"
   errEcho "    CAUTION: This will display the admin password."
   errEcho
-  errEcho "    CONTEXT is the name of a kube context that matches a ClusterClaim"
+  errEcho "    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim"
   errEcho
   errEcho "    The following OPTIONS are available:"
   errEcho

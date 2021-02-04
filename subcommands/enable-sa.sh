@@ -9,7 +9,7 @@ function enable_sa_usage {
   errEcho "    $(enable_sa_description)"
   errEcho "    Run if you do not have permission to edit the ClusterDeployment for a ClusterClaim"
   errEcho
-  errEcho "    CONTEXT is the name of a kube context that matches a ClusterClaim"
+  errEcho "    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim"
   errEcho
   abort
 }

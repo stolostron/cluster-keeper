@@ -9,7 +9,7 @@ function acm_usage {
   errEcho "    $(acm_description)"
   errEcho "    If the context matches a ClusterClaim, the kubeadmin password is copied to the clipboard"
   errEcho
-  errEcho "    CONTEXT is the name of a kube context"
+  errEcho "    CONTEXT is the name of a kubeconfig context"
   errEcho "        'cm' context refers to the ClusterPool host"
   errEcho
   abort

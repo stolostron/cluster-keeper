@@ -10,7 +10,7 @@ function unlock_usage {
   errEcho "    Removes a lock from a cluster"
   errEcho "    If you remove the last lock, you may wish to hibernate the cluster"
   errEcho
-  errEcho "    CONTEXT is the name of a kube context that matches a ClusterClaim"
+  errEcho "    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim"
   errEcho
   errEcho "    The following OPTIONS are available:"
   errEcho

@@ -11,7 +11,7 @@ function lock_usage {
   errEcho "    Other users are prevented from running certain subcommands on locked"
   errEcho "    clusters, like 'cm run', 'cm hibernate', and 'cm delete'"
   errEcho
-  errEcho "    CONTEXT is the name of a kube context that matches a ClusterClaim"
+  errEcho "    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim"
   errEcho
   errEcho "    The following OPTIONS are available:"
   errEcho

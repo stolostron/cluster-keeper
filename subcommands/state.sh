@@ -8,7 +8,7 @@ function state_usage {
   errEcho
   errEcho "    $(state_description)"
   errEcho
-  errEcho "    CONTEXT is the name of a kube context that matches a ClusterClaim"
+  errEcho "    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim"
   errEcho
   abort
 }
