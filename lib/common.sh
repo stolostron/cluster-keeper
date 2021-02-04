@@ -154,17 +154,11 @@ function notImplemented {
 
 # Creates and logs in as a new ServiceAccount in the cluster pool target namespace
 # Account is named for the current user
-function newServiceAccount {
+function newCMServiceAccount {
   local user=$1
   local serviceAccount=$(echo "$user" | tr A-Z a-z)
   verbose 0 "Creating ServiceAccount $serviceAccount"
-  cmdTry oc create -f - << EOF
-kind: ServiceAccount
-apiVersion: v1
-metadata:
-  name: $serviceAccount
-  namespace: $CLUSTERPOOL_TARGET_NAMESPACE
-EOF
+  cmdTry oc -n $CLUSTERPOOL_TARGET_NAMESPACE create serviceaccount $serviceAccount
   verbose 1 "Looking up token secret"
   local tokenSecret=$(sub oc -n $CLUSTERPOOL_TARGET_NAMESPACE get ServiceAccount $serviceAccount -o json | jq -r '.secrets | map(select(.name | test("token")))[0] | .name')
   verbose 1 "Extracting token"
@@ -206,6 +200,18 @@ function createContext {
   cmd oc --kubeconfig $kubeconfig config set-context $context --user $context
   cmd oc --kubeconfig $kubeconfig config unset users.admin
 
+  # Create ServiceAccount and ClusterRoleBinding in order to obtain token
+  local user=$(getUsername)
+  verbose 0 "Creating ServiceAccount $user"
+  cmdTry oc --kubeconfig $kubeconfig -n default create serviceaccount $user
+  verbose 1 "Creating ClusterRoleBinding $user"
+  cmdTry oc --kubeconfig $kubeconfig create clusterrolebinding $context --clusterrole=cluster-admin --serviceaccount=default:$user
+  verbose 1 "Looking up token secret"
+  local tokenSecret=$(sub oc --kubeconfig $kubeconfig -n default get ServiceAccount $user -o json | jq -r '.secrets | map(select(.name | test("token")))[0] | .name')
+  verbose 1 "Extracting token"
+  local token=$(sub oc --kubeconfig $kubeconfig -n default get Secret $tokenSecret -o json | jq -r '.data.token' | base64 --decode)
+  cmd oc --kubeconfig $kubeconfig config set-credentials $context --token $token
+
   local timestamp=$(date "+%s")
   local user_kubeconfig="${HOME}/.kube/config"
   local new_user_kubeconfig="${user_kubeconfig}.new"
@@ -236,7 +242,7 @@ function createCMContext {
     local user=$(subIf oc whoami)
     if ! [[ $user =~ ^system:serviceaccount:${CLUSTERPOOL_TARGET_NAMESPACE}: ]]
     then
-      newServiceAccount $user
+      newCMServiceAccount $user
     fi
 
     verbose 0 "Renaming current context to \"cm\""
@@ -611,11 +617,15 @@ EOF
   disableHibernation $claim
 }
 
+function getUsername {
+  ocWithContext cm whoami | rev | cut -d : -f 1 | rev
+}
+
 function getLockId {
   local lockId="$1"
   if [[ -z "$lockId" ]]
   then
-    lockId=$(ocWithContext cm whoami | rev | cut -d : -f 1 | rev)
+    lockId=$(getUsername)
   fi
   echo "$lockId"
 }
