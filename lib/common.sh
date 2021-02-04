@@ -454,9 +454,8 @@ function waitForClusterDeployment {
 
     # Wait for cluster to be running and reachable
     local conditionsJson
-    conditionsJson=$(ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment -o json  | jq -r '.status.conditions')
-    local hibernating=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Hibernating") | .status')
-    local unreachable=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Unreachable") | .status')
+    local hibernating="True"
+    local unreachable="True"
 
     local count=0
     until [[ $count -gt $HIBERNATE_WAIT_MAX || ($hibernating == "False" && $unreachable == "False") ]]
@@ -466,7 +465,7 @@ function waitForClusterDeployment {
       unreachable=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Unreachable") | .status')
       count=$(($count + 1))
 
-      if [[ $count -le $HIBERNATE_WAIT_MAX && ($hibernating == "True" && $unreachable == "True") ]]
+      if [[ $count -le $HIBERNATE_WAIT_MAX && ($hibernating == "True" || $unreachable == "True") ]]
       then
         verbose 0 "Waiting up to $HIBERNATE_WAIT_MAX min for ClusterDeployment to be running and reachable ($count/$HIBERNATE_WAIT_MAX)..."
         sleep 60
