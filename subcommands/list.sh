@@ -23,7 +23,7 @@ function list {
       ocWithContext cm get ClusterPools
       ;;
     claim*|cc*|clusterclaim*)
-      ocWithContext cm get ClusterClaims -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS"
+      ocWithContext cm get ClusterClaims -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS" | enhanceClusterClaimOutput
       ;;
     cluster*|cd*|clusterdeployment*)
       ocWithContext cm get ClusterDeployments -A -L hibernate

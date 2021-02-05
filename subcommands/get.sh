@@ -24,7 +24,7 @@ function get_usage {
 function get {
   local type=$1
   local name=$2
-  local claim
+  local claim clusterClaim clusterPool clusterDeployment
   
   if [[ -z $name ]]
   then
@@ -41,28 +41,34 @@ function get {
         if [[ $(subRC oc --context cm get ClusterPool $name) -eq 0 ]]
         then
           shift
-          ocWithContext cm get ClusterPool $name "$@"
+          clusterPool=$name
         elif [[ -n $(getClusterClaim $name) ]]
         then
           shift
-          ocWithContext cm get ClusterPool $(getClusterPool $name "required") "$@"
+          clusterPool=$(getClusterPool $name "required")
         else
-          ocWithContext cm get ClusterPool $(getClusterPool $(current) "required") "$@"
+          clusterPool=$(getClusterPool $(current) "required")
         fi
+        ocWithContext cm get ClusterPool $clusterPool "$@"
       fi
       ;;
     claim*|cc*|clusterclaim*)
       if [[ -n $claim ]]
       then
-        ocWithContext cm get ClusterClaim $claim -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS"
+        ocWithContext cm get ClusterClaim $claim -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS" | enhanceClusterClaimOutput
       else
-        local clusterClaim=$(getClusterClaim $name)
-        if [[ -n $clusterClaim ]]
+        clusterClaim=$(getClusterClaim $name)
+        if [[ -z $clusterClaim ]]
         then
-          shift
-          ocWithContext cm get ClusterClaim $clusterClaim -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS" "$@"
+          clusterClaim=$(getClusterClaim $(current) "required")
         else
-          ocWithContext cm get ClusterClaim $(getClusterClaim $(current) "required") -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS" "$@"
+          shift
+        fi
+        if [[ -z "$@" ]]
+        then
+          ocWithContext cm get ClusterClaim $clusterClaim -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS" | enhanceClusterClaimOutput
+        else  
+          ocWithContext cm get ClusterClaim $clusterClaim "$@"
         fi
       fi
       ;;
@@ -75,16 +81,15 @@ function get {
         if [[ $(subRC oc --context cm -n $name get ClusterDeployment $name) -eq 0 ]]
         then
           shift
-          ocWithContext cm -n $name get ClusterDeployment $name -L hibernate "$@"
+          clusterDeployment=$name
         elif [[ -n $(getClusterClaim $name) ]]
         then
           shift
-          local clusterDeployment=$(getClusterDeployment $name "required")
-          ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment -L hibernate "$@"
+          clusterDeployment=$(getClusterDeployment $name "required")
         else
-          local clusterDeployment=$(getClusterDeployment $(current) "required")
-          ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment "$@"
+          clusterDeployment=$(getClusterDeployment $(current) "required")
         fi
+        ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment -L hibernate "$@"
       fi
       ;;
     *)

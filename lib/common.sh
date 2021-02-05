@@ -9,12 +9,12 @@ VERIFIED_CONTEXTS=()
 
 CLUSTERCLAIM_CUSTOM_COLUMNS="\
 NAME:.metadata.name,\
-POOL:.spec.clusterPoolName,\
 CLUSTER:.spec.namespace,\
+POWERSTATE:PLACEHOLDER,\
 LOCKS:.metadata.annotations.open-cluster-management\.io/cluster-manager-locks,\
-SUBJECTS:.spec.subjects[*].name,\
 SCHEDULE:.metadata.annotations.open-cluster-management\.io/cluster-manager-hibernation,\
 LIFETIME:.spec.lifetime,\
+HIBERNATE:PLACEHOLDER,\
 AGE:.metadata.creationTimestamp"
 
 function abort {
@@ -716,4 +716,52 @@ function getCreds {
   export CLUSTERCLAIM_NAME=$1
   export CLUSTERPOOL_TARGET_NAMESPACE
   ignoreOutput withContext cm dirSensitiveCmd $(dependency lifeguard/clusterclaims/get_credentials.sh)
+}
+
+function firstField {
+  echo $1
+}
+
+function indexOf {
+  local before
+  local container="$1"
+  local search="$2"
+
+  before=${container/${search}*/}
+  echo ${#before}
+}
+
+function enhanceClusterClaimOutput {
+  local powerstateIndex hibernateIndex clusterIndex clusterDeployments cdName clusterWidth clusterName
+  declare -A powerstateMap
+  declare -A hibernateMap
+  clusterDeployments=$(sub ocWithContext cm get ClusterDeployments -A -L hibernate)
+  
+  # Process ClusterDeployment lines and index POWERSTATE and HIBERNATE by NAME
+  while IFS='' read -r line
+  do
+    if [[ -z $powerstateIndex ]]
+    then
+      # Header line; find index of POWERSTATE and HIBERNATE columns
+      powerstateIndex=$(indexOf "$line" POWERSTATE)
+      hiberateIndex=$(indexOf "$line" HIBERNATE)
+    else 
+      # Data lines; map POWERSTATE and HIBERNATE
+      cdName=$(firstField $line)
+      powerstateMap[$cdName]=${line:${powerstateIndex}:11} # Longest states are 11 characters (Unsupported, Hibernating)
+      hibernateMap[$cdName]=${line:${hiberateIndex}:4}     # All values are 4 characters (true, skip)
+    fi
+  done < <(printf '%s\n' "$clusterDeployments")
+
+  # Process ClusterClaim lines, substituting in POWERSTATE and HIBERNATE
+  IFS='' read
+  clusterIndex=$(indexOf "$REPLY" CLUSTER)
+  powerstateIndex=$(indexOf "$REPLY" POWERSTATE)
+  clusterWidth=$(($powerstateIndex - $clusterIndex))
+  echo "$REPLY"
+  while IFS='' read
+  do
+    clusterName=$(echo ${REPLY:$clusterIndex:$clusterWidth})
+    echo "$REPLY" | sed -e "s/<none>     /${powerstateMap[$clusterName]}/" -e "s/\(.*\)<none>/\1${hibernateMap[$clusterName]}  /" 
+  done
 }
