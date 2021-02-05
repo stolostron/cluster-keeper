@@ -317,8 +317,9 @@ function withContext {
 
 # Resolves a dependency on another open-cluster-management project
 function dependency {
-  local dependencies="$DIR/dependencies"
-  local localDep="$dependencies/$1"
+  local dependencies localDep gitBase depName depRepo
+  dependencies="$DIR/dependencies"
+  localDep="$dependencies/$1"
   if [[ -f "$localDep" ]]
   then
     nd $(dirname "$localDep")
@@ -328,11 +329,13 @@ function dependency {
     echo $localDep
     return 0
   else
-    local gitBase=$(subIf dirname $(git remote get-url origin))
+    nd $DIR
+    gitBase=$(subIf dirname $(git remote get-url origin))
+    od
     if [[ -n $gitBase ]]
     then
-      local depName=$(echo "$1" | cut -d / -f 1)
-      local depRepo=$gitBase/${depName}.git
+      depName=$(echo "$1" | cut -d / -f 1)
+      depRepo=$gitBase/${depName}.git
       mkdir -p "$dependencies"
       nd "$dependencies"
       verbose 0 "Cloning $depRepo"
