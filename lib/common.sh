@@ -732,7 +732,7 @@ function indexOf {
 }
 
 function enhanceClusterClaimOutput {
-  local powerstateIndex hibernateIndex clusterIndex clusterDeployments cdName clusterWidth clusterName
+  local powerstateIndex hibernateIndex clusterIndex clusterDeployments cdName clusterWidth clusterName powerstateReplacement hibernateReplacement
   declare -A powerstateMap
   declare -A hibernateMap
   clusterDeployments=$(sub ocWithContext cm get ClusterDeployments -A -L hibernate)
@@ -762,6 +762,14 @@ function enhanceClusterClaimOutput {
   while IFS='' read
   do
     clusterName=$(echo ${REPLY:$clusterIndex:$clusterWidth})
-    echo "$REPLY" | sed -e "s/<none>     /${powerstateMap[$clusterName]}/" -e "s/\(.*\)<none>/\1${hibernateMap[$clusterName]}  /" 
+    if [[ -n "${powerstateMap[$clusterName]}" ]]
+    then
+      powerstateReplacement=${powerstateMap[$clusterName]}
+      hibernateReplacement="${hibernateMap[$clusterName]}  "
+    else
+      powerstateReplacement="<none>     " # 11 wide
+      hibernateReplacement="<none>" # 6 wide
+    fi
+    echo "$REPLY" | sed -e "s/<none>     /${powerstateReplacement}/" -e "s/\(.*\)<none>/\1${hibernateReplacement}/" 
   done
 }
