@@ -24,7 +24,7 @@ function state {
       fatal "Cannot get power state for the ClusterPool host"
       ;;
     *)
-      clusterDeployment=$(getClusterDeployment $1 "required")
+      clusterDeployment=$(getClusterDeployment $context "required")
       ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment -o custom-columns=PowerState:'.status.conditions[?(@.type=="Hibernating")].reason' --no-headers
       ;;
   esac
