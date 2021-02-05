@@ -738,7 +738,7 @@ function enhanceClusterClaimOutput {
   local powerstateIndex hibernateIndex clusterIndex clusterDeployments cdName clusterWidth clusterName powerstateReplacement hibernateReplacement
   declare -A powerstateMap
   declare -A hibernateMap
-  clusterDeployments=$(sub ocWithContext cm get ClusterDeployments -A -L hibernate)
+  clusterDeployments="$(sub ocWithContext cm get ClusterDeployments -A -L hibernate)\n"
   
   # Process ClusterDeployment lines and index POWERSTATE and HIBERNATE by NAME
   while IFS='' read -r line
@@ -754,7 +754,7 @@ function enhanceClusterClaimOutput {
       powerstateMap[$cdName]=${line:${powerstateIndex}:11} # Longest states are 11 characters (Unsupported, Hibernating)
       hibernateMap[$cdName]=${line:${hiberateIndex}:4}     # All values are 4 characters (true, skip)
     fi
-  done < <(printf '%s\n' "$clusterDeployments")
+  done <<< $clusterDeployments
 
   # Process ClusterClaim lines, substituting in POWERSTATE and HIBERNATE
   IFS='' read

@@ -1,5 +1,5 @@
-#!/usr/bin/env bash --posix
-set -e
+#!/usr/bin/env bash
+set -e -o posix
 
 trap "exit 1" TERM
 export TOP_PID=$$
@@ -54,7 +54,7 @@ then
 else
   if [[ -n $KUBECONFIG ]]
   then
-    verbose 0 "WARNING: KUBECONFIG is set and is being ignored by $(basename ${0})"
+    verbose -1 "WARNING: KUBECONFIG is set and is being ignored by $(basename ${0})"
     unset KUBECONFIG
   fi
   verifyContext cm

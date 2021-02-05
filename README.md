@@ -38,7 +38,7 @@ Cluster Manager leverages [Lifeguard](https://github.com/open-cluster-management
 - `bash` 
    - version 4 or newer
    - on macOS with [Homebrew](https://brew.sh/) installed, run `brew install bash`. This bash must be first in your path, but need not be `/bin/bash` or your default login shell.
-- `oc`
+- `oc` version 4.3 or newer
 - `jq`
   - on macOS with [Homebrew](https://brew.sh/) installed, run `brew install jq`
 - `gsed`
