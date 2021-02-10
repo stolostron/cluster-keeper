@@ -257,7 +257,7 @@ function createCMContext {
 function verifyContext {
   local context="$1"
   verbose 1 "Verifying context $context"
-  local alreadyVerified=""
+  local alreadyVerified powerState
   for i in "${VERIFIED_CONTEXTS[@]}"
   do
     if [[ $i == $context ]]
@@ -279,6 +279,7 @@ function verifyContext {
       if [[ "$context" != "cm" && -n $(getClusterClaim "$context") ]]
       then
         # Make sure cluster is running
+        setPowerState "$context" "Running"
         ignoreOutput waitForClusterDeployment "$context" "Running"
       fi
 
@@ -428,13 +429,15 @@ function getClusterDeployment {
 
 function waitForClusterDeployment {
   local clusterClaim=$1
-  local running=$2
+  local powerState=$2
+  local count clusterDeployment conditionsJson
+  local hibernating hibernatingReason unreachable
+  local hibernatingDesired hibernatingReasonDesired unreachableDesired
 
   # Verify that the claim exists and wait for ClusterDeployment
-  local count=0
+  count=0
   until [[ -n "$clusterDeployment" || $count -gt $CLUSTER_WAIT_MAX ]]
   do
-    local clusterDeployment
     clusterDeployment=$(ocWithContext cm get ClusterClaim "$clusterClaim" -o jsonpath='{.spec.namespace}')
     count=$(($count + 1))
 
@@ -446,31 +449,36 @@ function waitForClusterDeployment {
   done
 
 
-  if [[ -n "$running" ]]
+  # Wait for specific power state
+  if [[ $powerState =~ Running|Hibernating ]]
   then
-    # Check if cluster is hibernating and resume if needed
-    local powerState=$(ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment -o json | jq -r '.spec.powerState')
-    if [[ $powerState != "Running" ]]
+    if [[ $powerState == "Running" ]]
     then
-      setPowerState $clusterClaim "Running"
+      hibernatingDesired="False"
+      hibernatingReasonDesired="Running|Unsupported"
+      unreachableDesired="False"
+    else
+      hibernatingDesired="True"
+      hibernatingReasonDesired="Hibernating"
+      unreachableDesired="True"
     fi
+    verbose 1 "(hibernatingDesired=$hibernatingDesired hibernatingReasonDesired=$hibernatingReasonDesired unreachableDesired=$unreachableDesired)"
 
-    # Wait for cluster to be running and reachable
-    local conditionsJson
-    local hibernating="True"
-    local unreachable="True"
-
-    local count=0
-    until [[ $count -gt $HIBERNATE_WAIT_MAX || ($hibernating == "False" && $unreachable == "False") ]]
+    # Wait for cluster to reach desired state
+    count=0
+    until [[ $count -gt $HIBERNATE_WAIT_MAX || ($hibernating =~ $hibernatingDesired && $hibernatingReason =~ $hibernatingReasonDesired && $unreachable =~ $unreachableDesired) ]]
     do
       conditionsJson=$(ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment -o json  | jq -r '.status.conditions')
       hibernating=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Hibernating") | .status')
+      hibernatingReason=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Hibernating") | .reason')
       unreachable=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Unreachable") | .status')
       count=$(($count + 1))
 
-      if [[ $count -le $HIBERNATE_WAIT_MAX && ($hibernating == "True" || $unreachable == "True") ]]
+      verbose 1 "(hibernating=$hibernating hibernatingReason=$hibernatingReason unreachable=$unreachable)"
+
+      if [[ $count -le $HIBERNATE_WAIT_MAX && ! ($hibernating =~ $hibernatingDesired && $hibernatingReason =~ $hibernatingReasonDesired && $unreachable =~ $unreachableDesired) ]]
       then
-        verbose 0 "Waiting up to $HIBERNATE_WAIT_MAX min for ClusterDeployment to be running and reachable ($count/$HIBERNATE_WAIT_MAX)..."
+        verbose 0 "Waiting up to $HIBERNATE_WAIT_MAX min for ClusterDeployment to be $powerState ($count/$HIBERNATE_WAIT_MAX)..."
         sleep 60
       fi
     done
@@ -502,17 +510,37 @@ function checkLocks {
 function setPowerState {
   local claim=$1
   local state=$2
+  local powerState oppositeState deploymentPatch
   clusterDeployment=$(getClusterDeployment $claim "required")
-  verbose 0 "Setting power state to $state on ClusterDeployment $clusterDeployment"
   checkLocks $claim
   
-  local deploymentPatch=$(cat << EOF
+  if [[ $state == "Hibernating" ]]
+  then
+    oppositeState="Running"
+  elif [[ $state == "Running" ]]
+  then
+    oppositeState="Hibernating"
+  fi
+  
+  powerState=$(ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment -o json | jq -r '.spec.powerState')
+  if [[ $powerState != $state ]]
+  then
+    
+    if [[ -n $oppositeState ]]
+    then
+      waitForClusterDeployment $claim $oppositeState
+    fi
+    verbose 0 "Setting power state to $state on ClusterDeployment $clusterDeployment"
+    deploymentPatch=$(cat << EOF
 - op: add
   path: /spec/powerState
   value: $state
 EOF
   )
-  ignoreOutput ocWithContext cm -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
+    ignoreOutput ocWithContext cm -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
+  else
+    verbose 1 "Power state is already $powerState on ClusterDeployment $clusterDeployment"
+  fi
 }
 
 function enableServiceAccounts {
@@ -713,6 +741,8 @@ function displayCreds {
 }
 
 function getCreds {
+  local powerState
+  setPowerState $1 "Running"
   ignoreOutput waitForClusterDeployment $1 "Running"
   verbose 0 "Fetching credentials for ${1}"
   # Use lifeguard/clusterclaims/get_credentials.sh to get the credentionals for the cluster
