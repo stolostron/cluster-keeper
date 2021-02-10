@@ -528,7 +528,7 @@ function setPowerState {
     
     if [[ -n $oppositeState ]]
     then
-      waitForClusterDeployment $claim $oppositeState
+      ignoreOutput waitForClusterDeployment $claim $oppositeState
     fi
     verbose 0 "Setting power state to $state on ClusterDeployment $clusterDeployment"
     deploymentPatch=$(cat << EOF
