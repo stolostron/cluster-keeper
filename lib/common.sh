@@ -283,7 +283,7 @@ function verifyContext {
         ignoreOutput waitForClusterDeployment "$context" "Running"
       fi
 
-      if [[ $(subRC oc --context "$context" status --request-timeout 5s) -ne 0 ]]
+      if [[ $(subRC oc --context "$context" status --request-timeout 10s) -ne 0 ]]
       then
         # context may be out-of-date
         createContext "$context"
@@ -292,7 +292,7 @@ function verifyContext {
 
     # Context should now exist and be reachable; fail otherwise
     ignoreOutput oc config get-contexts "$context"
-    ignoreOutput oc --context "$context" status --request-timeout 5s
+    ignoreOutput oc --context "$context" status --request-timeout 10s
     VERIFIED_CONTEXTS+="$context"
   fi
 }
@@ -512,7 +512,6 @@ function setPowerState {
   local state=$2
   local powerState oppositeState deploymentPatch
   clusterDeployment=$(getClusterDeployment $claim "required")
-  checkLocks $claim
   
   if [[ $state == "Hibernating" ]]
   then
@@ -525,7 +524,7 @@ function setPowerState {
   powerState=$(ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment -o json | jq -r '.spec.powerState')
   if [[ $powerState != $state ]]
   then
-    
+    checkLocks $claim
     if [[ -n $oppositeState ]]
     then
       ignoreOutput waitForClusterDeployment $claim $oppositeState

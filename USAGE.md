@@ -83,6 +83,10 @@ usage: cm acm [CONTEXT]
 
     CONTEXT is the name of a kubeconfig context
         'cm' context refers to the ClusterPool host
+
+    The following OPTIONS are available:
+
+    -f    Force operation if cluster is currently locked
 ```
 <sup><sub>[🔝 Back to top](#usage)</sub></sup>
 
@@ -95,6 +99,10 @@ usage: cm console [CONTEXT]
 
     CONTEXT is the name of a kubeconfig context
         'cm' context refers to the ClusterPool host
+
+    The following OPTIONS are available:
+
+    -f    Force operation if cluster is currently locked
 ```
 <sup><sub>[🔝 Back to top](#usage)</sub></sup>
 
@@ -109,6 +117,7 @@ usage: cm creds [OPTIONS] [CONTEXT]
 
     The following OPTIONS are available:
 
+    -f    Force operation if cluster is currently locked
     -r    Refresh the credentials by fetching a fresh copy
 ```
 <sup><sub>[🔝 Back to top](#usage)</sub></sup>

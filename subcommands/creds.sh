@@ -13,6 +13,7 @@ function creds_usage {
   errEcho
   errEcho "    The following OPTIONS are available:"
   errEcho
+  errEcho "    -f    Force operation if cluster is currently locked"
   errEcho "    -r    Refresh the credentials by fetching a fresh copy"
   errEcho
   abort
@@ -20,8 +21,9 @@ function creds_usage {
 
 function creds {
   OPTIND=1
-  while getopts :r o 
+  while getopts :fr o 
   do case "$o" in
+    f)  export FORCE="true";;
     r)  FETCH_FRESH="true";;
     [?]) creds_usage;;
     esac

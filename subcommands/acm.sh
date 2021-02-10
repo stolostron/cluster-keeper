@@ -12,10 +12,23 @@ function acm_usage {
   errEcho "    CONTEXT is the name of a kubeconfig context"
   errEcho "        'cm' context refers to the ClusterPool host"
   errEcho
+  errEcho "    The following OPTIONS are available:"
+  errEcho
+  errEcho "    -f    Force operation if cluster is currently locked"
+  errEcho
   abort
 }
 
 function acm {
+  OPTIND=1
+  while getopts :fr o 
+  do case "$o" in
+    f)  export FORCE="true";;
+    [?]) creds_usage;;
+    esac
+  done
+  shift $(($OPTIND - 1))
+
   local context=$1
   if [[ -z $context ]]
   then
