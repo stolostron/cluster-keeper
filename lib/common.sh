@@ -797,9 +797,13 @@ function enhanceClusterClaimOutput {
     if [[ -n "${powerstateMap[$clusterName]}" ]]
     then
       powerstateReplacement=${powerstateMap[$clusterName]}
-      hibernateReplacement="${hibernateMap[$clusterName]}  "
     else
       powerstateReplacement="<none>     " # 11 wide
+    fi
+    if [[ -n "${hibernateMap[$clusterName]}" ]]
+    then
+      hibernateReplacement="${hibernateMap[$clusterName]}  "
+    else
       hibernateReplacement="<none>" # 6 wide
     fi
     echo "$REPLY" | sed -e "s/<none>     /${powerstateReplacement}/" -e "s/\(.*\)<none>/\1${hibernateReplacement}/" 
