@@ -205,7 +205,7 @@ function createContext {
   verbose 0 "Creating ServiceAccount $user"
   cmdTry oc --kubeconfig $kubeconfig -n default create serviceaccount $user
   verbose 1 "Creating ClusterRoleBinding $user"
-  cmdTry oc --kubeconfig $kubeconfig create clusterrolebinding $context --clusterrole=cluster-admin --serviceaccount=default:$user
+  cmdTry oc --kubeconfig $kubeconfig create clusterrolebinding $user --clusterrole=cluster-admin --serviceaccount=default:$user
   verbose 1 "Looking up token secret"
   local tokenSecret=$(sub oc --kubeconfig $kubeconfig -n default get ServiceAccount $user -o json | jq -r '.secrets | map(select(.name | test("token")))[0] | .name')
   verbose 1 "Extracting token"
