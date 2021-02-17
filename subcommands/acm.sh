@@ -14,6 +14,7 @@ function acm_usage {
   errEcho
   errEcho "    The following OPTIONS are available:"
   errEcho
+  errEcho "    -d    Display the ACM URL only"
   errEcho "    -f    Force operation if cluster is currently locked"
   errEcho
   abort
@@ -21,8 +22,9 @@ function acm_usage {
 
 function acm {
   OPTIND=1
-  while getopts :fr o 
+  while getopts :df o 
   do case "$o" in
+    d)  export DISPLAY="true";;
     f)  export FORCE="true";;
     [?]) creds_usage;;
     esac
@@ -35,13 +37,18 @@ function acm {
     context=$(current)
   fi
   verifyContext $context
-  if [[ -n $(getClusterClaim "$context") ]]
+  if [[ -z $DISPLAY && -n $(getClusterClaim "$context") ]]
   then
     copyPW "$context"
   fi
   local acm_url
   acm_url=https://$(sub oc --context $context -n open-cluster-management get route multicloud-console -o jsonpath='{.spec.host}')
-  verbose 0 "Opening $acm_url"
-  sleep 1
-  open $acm_url
+  if [[ -n $DISPLAY ]]
+  then
+    echo $acm_url
+  else
+    verbose 0 "Opening $acm_url"
+    sleep 1
+    open $acm_url
+  fi
 }
