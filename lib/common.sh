@@ -724,11 +724,17 @@ function getCredsFile {
 function copyPW {
   local context=$1
   local fetch_fresh=$2
-  local credsFile
+  local credsFile username
   credsFile=$(getCredsFile "$context" "lifeguard/clusterclaims/${context}/${context}.creds.json" "$fetch_fresh")
-  local username=$(cat "$credsFile" | jq -r '.username')
+  username=$(cat "$credsFile" | jq -r '.username')
   cat "$credsFile" | jq -j '.password' | pbcopy
   verbose 0 "Password for $username copied to clipboard"
+}
+
+function showKubeconfig {
+  local context=$1
+  local fetch_fresh=$2
+  getCredsFile "$context" "lifeguard/clusterclaims/${context}/kubeconfig" "$fetch_fresh"
 }
 
 function displayCreds {

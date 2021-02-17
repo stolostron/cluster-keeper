@@ -14,6 +14,7 @@ function console_usage {
   errEcho
   errEcho "    The following OPTIONS are available:"
   errEcho
+  errEcho "    -d    Display the console URL only"
   errEcho "    -f    Force operation if cluster is currently locked"
   errEcho
   abort
@@ -21,8 +22,9 @@ function console_usage {
 
 function console {
   OPTIND=1
-  while getopts :fr o 
+  while getopts :df o 
   do case "$o" in
+    d)  export DISPLAY="true";;
     f)  export FORCE="true";;
     [?]) creds_usage;;
     esac
@@ -41,14 +43,19 @@ function console {
       ;;
     *)
       verifyContext "$context"
-      if [[ -n $(getClusterClaim "$context") ]]
+      if [[ -z $DISPLAY && -n $(getClusterClaim "$context") ]]
       then
         copyPW "$context"
       fi
       console_url=https://$(sub oc --context $context -n openshift-console get route console -o jsonpath='{.spec.host}')
       ;;
   esac
-  verbose 0 "Opening $console_url"
-  sleep 1
-  open $console_url
+  if [[ -n $DISPLAY ]]
+  then
+    echo $console_url
+  else
+    verbose 0 "Opening $console_url"
+    sleep 1
+    open $console_url
+  fi
 }
