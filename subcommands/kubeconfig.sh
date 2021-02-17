@@ -4,7 +4,7 @@ function kubeconfig_description {
 }
 
 function kubeconfig_usage {
-  errEcho "usage: $(basename ${0}) pw [OPTIONS] [CONTEXT]"
+  errEcho "usage: $(basename ${0}) kubeconfig [OPTIONS] [CONTEXT]"
   errEcho
   errEcho "    $(kubeconfig_description)"
   errEcho
