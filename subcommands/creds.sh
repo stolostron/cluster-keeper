@@ -14,6 +14,7 @@ function creds_usage {
   errEcho "    The following OPTIONS are available:"
   errEcho
   errEcho "    -f    Force operation if cluster is currently locked"
+  errEcho "    -p    Extract a single property, like password or api_url"
   errEcho "    -r    Refresh the credentials by fetching a fresh copy"
   errEcho
   abort
@@ -21,9 +22,10 @@ function creds_usage {
 
 function creds {
   OPTIND=1
-  while getopts :fr o 
+  while getopts :fp:r o 
   do case "$o" in
     f)  export FORCE="true";;
+    p)  PROPERTY="$OPTARG";;
     r)  FETCH_FRESH="true";;
     [?]) creds_usage;;
     esac
@@ -40,7 +42,12 @@ function creds {
       fatal "Cannot display credentials for the ClusterPool host"
       ;;
     *)
-      displayCreds $context $FETCH_FRESH
+      if [[ -z $PROPERTY ]]
+      then
+        displayCreds $context $FETCH_FRESH
+      else
+        displayCreds $context $FETCH_FRESH | jq -r ".$PROPERTY"
+      fi
       ;;
   esac
 }
