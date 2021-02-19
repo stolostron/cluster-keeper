@@ -13,8 +13,8 @@ CLUSTER:.spec.namespace,\
 POWERSTATE:PLACEHOLDER,\
 LOCKS:.metadata.annotations.open-cluster-management\.io/cluster-manager-locks,\
 SCHEDULE:.metadata.annotations.open-cluster-management\.io/cluster-manager-hibernation,\
-LIFETIME:.spec.lifetime,\
 HIBERNATE:PLACEHOLDER,\
+LIFETIME:.spec.lifetime,\
 AGE:.metadata.creationTimestamp"
 
 function abort {
@@ -769,8 +769,46 @@ function indexOf {
   echo ${#before}
 }
 
+function replaceString {
+  local length
+  local original="$1"
+  local replacement="$2"
+  local index="$3"
+  length=${#replacement}
+  echo "${original:0:${index}}${replacement}${original:$((index + length))}"
+}
+
+function getAge {
+  local days hours minutes result
+  local age=$1
+  days=$((age / 86400))
+  hours=$((age % 86400 / 3600))
+  minutes=$((age % 3600 / 60))
+  seconds=$((age % 60))
+  result=""
+  if [[ $days > 0 ]]
+  then
+    result="${days}d"
+  fi
+  if [[ $days < 7 && $hours > 0 ]]
+  then
+    result="${result}${hours}h"
+  fi
+  if [[ $days = 0 && $hours < 24 && $minutes > 0 ]]
+  then
+    result="${result}${minutes}m"
+  fi
+  if [[ $days = 0 && $hours = 0 && $minutes < 60 && $seconds > 0 ]]
+  then
+    result="${result}${seconds}s"
+  fi
+  echo $result
+}
+
 function enhanceClusterClaimOutput {
-  local powerstateIndex hibernateIndex clusterIndex clusterDeployments cdName clusterWidth clusterName powerstateReplacement hibernateReplacement
+  local ageIndex clusterIndex  hibernateIndex powerstateIndex clusterWidth
+  local clusterDeployments cdName clusterName
+  local currentTimestamp timestamp age
   declare -A powerstateMap
   declare -A hibernateMap
   clusterDeployments="$(sub ocWithContext cm get ClusterDeployments -A -L hibernate)\n"
@@ -787,31 +825,33 @@ function enhanceClusterClaimOutput {
       # Data lines; map POWERSTATE and HIBERNATE
       cdName=$(firstField $line)
       powerstateMap[$cdName]=${line:${powerstateIndex}:11} # Longest states are 11 characters (Unsupported, Hibernating)
-      hibernateMap[$cdName]=${line:${hiberateIndex}:4}     # All values are 4 characters (true, skip)
+      hibernateMap[$cdName]="${line:${hiberateIndex}:4}  " # All values are 4 characters (true, skip), so add 2 to cover <none>
     fi
   done <<< $clusterDeployments
 
   # Process ClusterClaim lines, substituting in POWERSTATE and HIBERNATE
-  IFS='' read
-  clusterIndex=$(indexOf "$REPLY" CLUSTER)
-  powerstateIndex=$(indexOf "$REPLY" POWERSTATE)
+  IFS='' read -r line
+  clusterIndex=$(indexOf "$line" CLUSTER)
+  powerstateIndex=$(indexOf "$line" POWERSTATE)
+  hibernateIndex=$(indexOf "$line" HIBERNATE)
+  ageIndex=$(indexOf "$line" AGE)
   clusterWidth=$(($powerstateIndex - $clusterIndex))
-  echo "$REPLY"
-  while IFS='' read
+  currentTimestamp=$(date "+%s")
+  echo "$line"
+  while IFS='' read -r line
   do
-    clusterName=$(echo ${REPLY:$clusterIndex:$clusterWidth})
+    clusterName=$(echo ${line:$clusterIndex:$clusterWidth})
     if [[ -n "${powerstateMap[$clusterName]}" ]]
     then
-      powerstateReplacement=${powerstateMap[$clusterName]}
-    else
-      powerstateReplacement="<none>     " # 11 wide
+      line=$(replaceString "$line" "${powerstateMap[$clusterName]}" $powerstateIndex)
     fi
     if [[ -n "${hibernateMap[$clusterName]}" ]]
     then
-      hibernateReplacement="${hibernateMap[$clusterName]}  "
-    else
-      hibernateReplacement="<none>" # 6 wide
+      line=$(replaceString "$line" "${hibernateMap[$clusterName]}" $hibernateIndex)
     fi
-    echo "$REPLY" | sed -e "s/<none>     /${powerstateReplacement}/" -e "s/\(.*\)<none>/\1${hibernateReplacement}/" 
+    timestamp=$(date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "${line:$ageIndex}" "+%s")
+    age=$(getAge $((currentTimestamp - timestamp)))
+    line=$(replaceString "$line" "$age" $ageIndex)
+    echo "${line:0:$((ageIndex + ${#age}))}"
   done
 }
