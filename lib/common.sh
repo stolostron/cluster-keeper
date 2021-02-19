@@ -283,7 +283,7 @@ function verifyContext {
         ignoreOutput waitForClusterDeployment "$context" "Running"
       fi
 
-      if [[ $(subRC oc --context "$context" status --request-timeout 10s) -ne 0 ]]
+      if [[ $(subRC oc --context "$context" get serviceaccounts --request-timeout 10s) -ne 0 ]]
       then
         # context may be out-of-date
         createContext "$context"
@@ -292,7 +292,7 @@ function verifyContext {
 
     # Context should now exist and be reachable; fail otherwise
     ignoreOutput oc config get-contexts "$context"
-    ignoreOutput oc --context "$context" status --request-timeout 10s
+    ignoreOutput oc --context "$context" get serviceaccounts --request-timeout 10s
     VERIFIED_CONTEXTS+="$context"
   fi
 }
@@ -811,7 +811,7 @@ function enhanceClusterClaimOutput {
   local currentTimestamp timestamp age
   declare -A powerstateMap
   declare -A hibernateMap
-  clusterDeployments="$(sub ocWithContext cm get ClusterDeployments -A -L hibernate)\n"
+  clusterDeployments="$(ocWithContext cm get ClusterDeployments -A -L hibernate)\n"
   
   # Process ClusterDeployment lines and index POWERSTATE and HIBERNATE by NAME
   while IFS='' read -r line
