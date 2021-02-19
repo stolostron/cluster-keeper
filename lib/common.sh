@@ -849,7 +849,12 @@ function enhanceClusterClaimOutput {
     then
       line=$(replaceString "$line" "${hibernateMap[$clusterName]}" $hibernateIndex)
     fi
-    timestamp=$(date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "${line:$ageIndex}" "+%s")
+    if [[ $(uname) = Darwin ]]
+    then
+      timestamp=$(date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "${line:$ageIndex}" "+%s")
+    else
+      timestamp=$(date -u -d "${line:$ageIndex}" "+%s")
+    fi
     age=$(getAge $((currentTimestamp - timestamp)))
     line=$(replaceString "$line" "$age" $ageIndex)
     echo "${line:0:$((ageIndex + ${#age}))}"
