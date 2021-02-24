@@ -86,7 +86,7 @@ usage: cm acm [CONTEXT]
     If the context matches a ClusterClaim, the kubeadmin password is copied to the clipboard
 
     CONTEXT is the name of a kubeconfig context
-        'cm' context refers to the ClusterPool host
+        'ck' context refers to the ClusterPool host
 
     The following OPTIONS are available:
 
@@ -103,7 +103,7 @@ usage: cm console [CONTEXT]
     If the context matches a ClusterClaim, the kubeadmin password is copied to the clipboard
 
     CONTEXT is the name of a kubeconfig context
-        'cm' context refers to the ClusterPool host
+        'ck' context refers to the ClusterPool host
 
     The following OPTIONS are available:
 
@@ -349,7 +349,7 @@ usage: cm use CONTEXT
     hibernating, it is resumed
 
     CONTEXT is the name of a kubeconfig context
-        'cm' context refers to the ClusterPool host
+        'ck' context refers to the ClusterPool host
 
     -f    Force operation if cluster is currently locked
 ```
@@ -364,7 +364,7 @@ usage: cm with CONTEXT COMMAND
     hibernating, it is resumed
 
     CONTEXT is the name of a kubeconfig context
-        'cm' context refers to the ClusterPool host
+        'ck' context refers to the ClusterPool host
     COMMAND is any command, such as a script that invokes oc or kubectl
 
     -f    Force operation if cluster is currently locked
