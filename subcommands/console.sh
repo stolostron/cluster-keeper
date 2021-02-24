@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for launching the OpenShift console
 function console_description {
   echo "Launch the OpenShift console for current or given context"

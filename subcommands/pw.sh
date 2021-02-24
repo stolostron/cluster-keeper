@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for copying cluster password to clipboard
 function pw_description {
   echo "Copy a cluster password to the clipboard"

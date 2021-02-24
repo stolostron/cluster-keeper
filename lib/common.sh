@@ -1,3 +1,5 @@
+# Copyright Contributors to the Open Cluster Management project
+
 VERBOSITY=0
 AUTO_HIBERNATION=true
 COMMAND_VERBOSITY=2

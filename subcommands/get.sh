@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for getting resources
 function get_description {
   echo "Get a ClusterPool, ClusterClaim, or ClusterDeployment"

@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for deleting a ClusterClaims
 function delete_description {
   echo "Delete a cluster by deleting its ClusterClaim"

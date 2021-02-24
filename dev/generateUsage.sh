@@ -1,4 +1,5 @@
 #!/usr/bin/env bash --posix
+# Copyright Contributors to the Open Cluster Management project
 USAGE_MARKDOWN=../USAGE.md
 
 function append {

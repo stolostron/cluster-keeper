@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for hibernating a cluster
 function hibernate_description {
   echo "Hibernate a cluster"

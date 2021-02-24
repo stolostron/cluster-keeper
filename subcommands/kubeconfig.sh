@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for displaying location of kubeconfig file
 function kubeconfig_description {
   echo "Display the location of the kubeconfig file"

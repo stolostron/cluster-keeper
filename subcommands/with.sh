@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for running scripts with a given context
 function with_description {
   echo "Run any command with the given context"

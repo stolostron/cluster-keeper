@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for unlocking a cluster
 function unlock_description {
   echo "Unlock a cluster"

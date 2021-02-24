@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for disabling hibernation on a cluster
 function disable_schedule_description {
   echo "Disable scheduled hibernation/resumption for current or given cluster"

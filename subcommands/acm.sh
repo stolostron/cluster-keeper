@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for launching the ACM console
 function acm_description {
   echo "Launch the ACM console for current or given context"

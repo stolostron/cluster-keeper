@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for listing resources
 function list_description {
   echo "List ClusterPools, ClusterClaims, and ClusterDeployments"

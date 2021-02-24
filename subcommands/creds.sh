@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for displaying credentials and other information
 function creds_description {
   echo "Display credentials for a cluster"

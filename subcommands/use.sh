@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for switching contexts
 function use_description {
   echo "Switch kubeconfig context"

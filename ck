@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright Contributors to the Open Cluster Management project
 set -e -o posix
 
 trap "exit 1" TERM

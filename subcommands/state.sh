@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for checking the state of a cluster
 function state_description {
   echo "Get the power state of a cluster"

@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for creating new ClusterClaims
 function new_description {
   echo "Get a new cluster by creating a ClusterClaim"

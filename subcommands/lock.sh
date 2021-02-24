@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for locking a cluster
 function lock_description {
   echo "Lock a cluster"

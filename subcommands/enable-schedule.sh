@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for enabling hibernation on a cluster
 function enable_schedule_description {
   echo "Enable scheduled hibernation/resumption for current or given cluster"
