@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for enabling namespace service accounts on a cluster
 function enable_sa_description {
   echo "Enable namespace service accounts for current or given cluster"
@@ -21,7 +22,7 @@ function enable_sa {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot enable service accounts for the ClusterPool host"
       ;;
     *)

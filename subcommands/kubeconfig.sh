@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for displaying location of kubeconfig file
 function kubeconfig_description {
   echo "Display the location of the kubeconfig file"
@@ -33,7 +34,7 @@ function kubeconfig {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot show kubeconfig file location for the ClusterPool host"
       ;;
     *)

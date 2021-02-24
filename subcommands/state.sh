@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for checking the state of a cluster
 function state_description {
   echo "Get the power state of a cluster"
@@ -20,12 +21,12 @@ function state {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot get power state for the ClusterPool host"
       ;;
     *)
       clusterDeployment=$(getClusterDeployment $context "required")
-      ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment -o custom-columns=PowerState:'.status.conditions[?(@.type=="Hibernating")].reason' --no-headers
+      ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment get ClusterDeployment $clusterDeployment -o custom-columns=PowerState:'.status.conditions[?(@.type=="Hibernating")].reason' --no-headers
       ;;
   esac
 }

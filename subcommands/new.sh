@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for creating new ClusterClaims
 function new_description {
   echo "Get a new cluster by creating a ClusterClaim"
@@ -43,7 +44,7 @@ function new {
   export CLUSTERCLAIM_GROUP_NAME
   export CLUSTERCLAIM_LIFETIME
   export SKIP_WAIT_AND_CREDENTIALS="true"
-  withContext cm dirSensitiveCmd $(dependency lifeguard/clusterclaims/apply.sh) << EOF
+  withContext $CLUSTERPOOL_CONTEXT_NAME dirSensitiveCmd $(dependency lifeguard/clusterclaims/apply.sh) << EOF
 N
 EOF
 

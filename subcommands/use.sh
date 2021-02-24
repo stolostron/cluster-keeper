@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for switching contexts
 function use_description {
   echo "Switch kubeconfig context"
@@ -11,7 +12,7 @@ function use_usage {
   errEcho "    hibernating, it is resumed"
   errEcho
   errEcho "    CONTEXT is the name of a kubeconfig context"
-  errEcho "        'cm' context refers to the ClusterPool host"
+  errEcho "        '$CLUSTERPOOL_CONTEXT_NAME' context refers to the ClusterPool host"
   errEcho
   errEcho "    -f    Force operation if cluster is currently locked"
   errEcho
@@ -33,8 +34,8 @@ function use {
     use_usage
   fi
   case $1 in
-    cm)
-      ocWithContext cm config use-context cm
+    $CLUSTERPOOL_CONTEXT_NAME)
+      ocWithContext $CLUSTERPOOL_CONTEXT_NAME config use-context $CLUSTERPOOL_CONTEXT_NAME
       ;;
     *)
       ocWithContext "$1" config use-context "$1"

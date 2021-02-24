@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for deleting a ClusterClaims
 function delete_description {
   echo "Delete a cluster by deleting its ClusterClaim"
@@ -53,9 +54,9 @@ function delete {
   export CLUSTERPOOL_TARGET_NAMESPACE
   if [[ -z "$CONFIRM_DELETION" ]]
   then
-    withContext cm dirSensitiveCmd $(dependency lifeguard/clusterclaims/delete.sh)
+    withContext $CLUSTERPOOL_CONTEXT_NAME dirSensitiveCmd $(dependency lifeguard/clusterclaims/delete.sh)
   else
-    withContext cm dirSensitiveCmd $(dependency lifeguard/clusterclaims/delete.sh) << EOF
+    withContext $CLUSTERPOOL_CONTEXT_NAME dirSensitiveCmd $(dependency lifeguard/clusterclaims/delete.sh) << EOF
 Y
 EOF
   fi

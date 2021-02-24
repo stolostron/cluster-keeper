@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for copying cluster password to clipboard
 function pw_description {
   echo "Copy a cluster password to the clipboard"
@@ -34,7 +35,7 @@ function pw {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot copy password for the ClusterPool host"
       ;;
     *)

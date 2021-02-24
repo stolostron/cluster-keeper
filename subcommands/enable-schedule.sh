@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for enabling hibernation on a cluster
 function enable_schedule_description {
   echo "Enable scheduled hibernation/resumption for current or given cluster"
@@ -33,7 +34,7 @@ function enable_schedule {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot control hibernation for the ClusterPool host"
       ;;
     *)

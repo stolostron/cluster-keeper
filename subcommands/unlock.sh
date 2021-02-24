@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for unlocking a cluster
 function unlock_description {
   echo "Unlock a cluster"
@@ -38,7 +39,7 @@ function unlock {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot unlock ClusterPool host"
       ;;
     *)

@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for resuming a cluster from hibernation
 function run_description {
   echo "Resume a hibernating cluster"
@@ -34,7 +35,7 @@ function run {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot resume ClusterPool host"
       ;;
     *)

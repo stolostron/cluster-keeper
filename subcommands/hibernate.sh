@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for hibernating a cluster
 function hibernate_description {
   echo "Hibernate a cluster"
@@ -34,7 +35,7 @@ function hibernate {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot hibernate ClusterPool host"
       ;;
     *)

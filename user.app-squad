@@ -1,5 +1,0 @@
-CLUSTERPOOL_CLUSTER=https://api.collective.aws.red-chesterfield.com:6443
-CLUSTERPOOL_CONSOLE=https://console-openshift-console.apps.collective.aws.red-chesterfield.com
-CLUSTERPOOL_TARGET_NAMESPACE=app
-CLUSTERCLAIM_GROUP_NAME=AppLifecycle
-AUTO_HIBERNATION=true

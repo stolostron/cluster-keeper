@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for displaying credentials and other information
 function creds_description {
   echo "Display credentials for a cluster"
@@ -38,7 +39,7 @@ function creds {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot display credentials for the ClusterPool host"
       ;;
     *)

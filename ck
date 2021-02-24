@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright Contributors to the Open Cluster Management project
 set -e -o posix
 
 trap "exit 1" TERM
@@ -57,6 +58,6 @@ else
     verbose -1 "WARNING: KUBECONFIG is set and is being ignored by $(basename ${0})"
     unset KUBECONFIG
   fi
-  verifyContext cm
+  verifyContext $CLUSTERPOOL_CONTEXT_NAME
   $subcommandFunction "$@"
 fi

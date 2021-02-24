@@ -1,3 +1,4 @@
+# Copyright Contributors to the Open Cluster Management project
 # Command for viewing current kubeconfig context
 function current_description {
   echo "Display the current kubeconfig context"
