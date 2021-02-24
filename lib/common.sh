@@ -608,7 +608,7 @@ EOF
   )
   local claimPatch=$(cat << EOF
 - op: add
-  path: /metadata/annotations/open-cluster-management.io~1cluster-manager-hibernation
+  path: /metadata/annotations/open-cluster-management.io~1cluster-keeper-hibernation
   value: "true"
 EOF
   )
@@ -652,7 +652,7 @@ function disableSchedule {
   verbose 0 "Disabling scheduled hibernation/resumption for $claim"
   local removeAnnotation=$(cat << EOF
 - op: remove
-  path: /metadata/annotations/open-cluster-management.io~1cluster-manager-hibernation
+  path: /metadata/annotations/open-cluster-management.io~1cluster-keeper-hibernation
 EOF
   )
   verbose 1 "Removing annotation on ClusterClaim $claim"
