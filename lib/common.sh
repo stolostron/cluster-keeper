@@ -786,19 +786,19 @@ function getAge {
   minutes=$((age % 3600 / 60))
   seconds=$((age % 60))
   result=""
-  if [[ $days > 0 ]]
+  if [[ $days -gt 0 ]]
   then
     result="${days}d"
   fi
-  if [[ $days < 7 && $hours > 0 ]]
+  if [[ $days -lt 7 && $hours -gt 0 ]]
   then
     result="${result}${hours}h"
   fi
-  if [[ $days = 0 && $hours < 24 && $minutes > 0 ]]
+  if [[ $days -eq 0 && $hours -lt 24 && $minutes -gt 0 ]]
   then
     result="${result}${minutes}m"
   fi
-  if [[ $days = 0 && $hours = 0 && $minutes < 60 && $seconds > 0 ]]
+  if [[ $days -eq 0 && $hours -eq 0 && $minutes -lt 60 && $seconds -gt 0 ]]
   then
     result="${result}${seconds}s"
   fi
