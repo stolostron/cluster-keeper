@@ -12,8 +12,8 @@ CLUSTERCLAIM_CUSTOM_COLUMNS="\
 NAME:.metadata.name,\
 CLUSTER:.spec.namespace,\
 POWERSTATE:PLACEHOLDER,\
-LOCKS:.metadata.annotations.open-cluster-management\.io/cluster-manager-locks,\
-SCHEDULE:.metadata.annotations.open-cluster-management\.io/cluster-manager-hibernation,\
+LOCKS:.metadata.annotations.open-cluster-management\.io/cluster-keeper-locks,\
+SCHEDULE:.metadata.annotations.open-cluster-management\.io/cluster-keeper-hibernation,\
 HIBERNATE:PLACEHOLDER,\
 LIFETIME:.spec.lifetime,\
 AGE:.metadata.creationTimestamp"
@@ -489,11 +489,11 @@ function waitForClusterDeployment {
 }
 
 function getHibernation {
-  ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-manager-hibernation}'
+  ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-keeper-hibernation}'
 }
 
 function getLocks {
-  ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-manager-locks}'
+  ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-keeper-locks}'
 }
 
 function checkLocks {
@@ -601,7 +601,7 @@ function enableSchedule {
   value: null
 - op: add
   path: /metadata/annotations
-  value: { "open-cluster-management.io/cluster-manager-hibernation": "true" }
+  value: { "open-cluster-management.io/cluster-keeper-hibernation": "true" }
 EOF
   )
   local claimPatch=$(cat << EOF
@@ -677,7 +677,7 @@ function addLock {
   local lockId=$(getLockId "$2")
   verbose 0 "Adding lock on $context for $lockId"
 
-  ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= (. // \"\" | split(\",\") + [\"$lockId\"] | unique | join(\",\"))" | ocWithContext $CLUSTERPOOL_CONTEXT_NAME replace -f -
+  ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-keeper-locks\"] |= (. // \"\" | split(\",\") + [\"$lockId\"] | unique | join(\",\"))" | ocWithContext $CLUSTERPOOL_CONTEXT_NAME replace -f -
   disableHibernation $context
 }
 
@@ -688,10 +688,10 @@ function removeLock {
   if [[ -n "$allLocks" ]]
   then
     verbose 0 "Removing all locks on $context"
-    ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= \"\"" | ocWithContext $CLUSTERPOOL_CONTEXT_NAME replace -f -
+    ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-keeper-locks\"] |= \"\"" | ocWithContext $CLUSTERPOOL_CONTEXT_NAME replace -f -
   else
     verbose 0 "Removing lock on $context for $lockId"
-    ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= (. // \"\" | split(\",\") - [\"$lockId\"] | unique | join(\",\"))"   | ocWithContext $CLUSTERPOOL_CONTEXT_NAME replace -f -
+    ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-keeper-locks\"] |= (. // \"\" | split(\",\") - [\"$lockId\"] | unique | join(\",\"))"   | ocWithContext $CLUSTERPOOL_CONTEXT_NAME replace -f -
   fi
   local locks=$(getLocks $1)
   if [[ -n $locks ]]
