@@ -4,6 +4,7 @@ COMMAND_VERBOSITY=2
 OUTPUT_VERBOSITY=3
 CLUSTER_WAIT_MAX=60
 HIBERNATE_WAIT_MAX=15
+CLUSTERPOOL_CONTEXT_NAME=cm
 
 VERIFIED_CONTEXTS=()
 
@@ -172,7 +173,7 @@ function createContext {
   local context="$1"
   verbose 0 "Creating context $context"
 
-  if [[ $context == cm ]]
+  if [[ $context == $CLUSTERPOOL_CONTEXT_NAME ]]
   then
     createCMContext
     return $?
@@ -231,7 +232,7 @@ function createContext {
   verbose 0 "${user_kubeconfig} updated with new context $context"
 }
 
-# Renames the current context to 'cm', making sure to use a ServiceAccount
+# Renames the current context to '$CLUSTERPOOL_CONTEXT_NAME', making sure to use a ServiceAccount
 # Can use pre-existing account or create a new one
 function createCMContext {
   local server=$(subIf oc whoami --show-server)
@@ -245,11 +246,11 @@ function createCMContext {
       newCMServiceAccount $user
     fi
 
-    verbose 0 "Renaming current context to \"cm\""
+    verbose 0 "Renaming current context to \"$CLUSTERPOOL_CONTEXT_NAME\""
     verbose 1 "(server=$server user=$user namespace=$CLUSTERPOOL_TARGET_NAMESPACE)"
-    cmdTry oc config delete-context cm
-    cmd oc config rename-context $(oc config current-context) cm
-    cmd oc config set-context cm --namespace $CLUSTERPOOL_TARGET_NAMESPACE
+    cmdTry oc config delete-context $CLUSTERPOOL_CONTEXT_NAME
+    cmd oc config rename-context $(oc config current-context) $CLUSTERPOOL_CONTEXT_NAME
+    cmd oc config set-context $CLUSTERPOOL_CONTEXT_NAME --namespace $CLUSTERPOOL_TARGET_NAMESPACE
   fi
 }
 
@@ -270,13 +271,13 @@ function verifyContext {
     verbose 1 "Context $context needs verification"
     if [[ $(subRC oc config get-contexts "$context") -ne 0 ]]
     then
-      # context does not exist; try to create it if it is 'cm' or corresponds to a ClusterClaim
-      if [[ "$context" == "cm" || -n $(getClusterClaim "$context") ]]
+      # context does not exist; try to create it if it is '$CLUSTERPOOL_CONTEXT_NAME' or corresponds to a ClusterClaim
+      if [[ "$context" == "$CLUSTERPOOL_CONTEXT_NAME" || -n $(getClusterClaim "$context") ]]
       then
         createContext "$context"
       fi
     else
-      if [[ "$context" != "cm" && -n $(getClusterClaim "$context") ]]
+      if [[ "$context" != "$CLUSTERPOOL_CONTEXT_NAME" && -n $(getClusterClaim "$context") ]]
       then
         # Make sure cluster is running
         setPowerState "$context" "Running"
@@ -394,7 +395,7 @@ function getClusterClaim {
   if ! [[ "$name" =~ [/:] ]]
   then
     local clusterClaim
-    clusterClaim=$(subIf oc --context cm get ClusterClaim $name -o jsonpath='{.metadata.name}')
+    clusterClaim=$(subIf oc --context $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim $name -o jsonpath='{.metadata.name}')
   fi
   if [[ -z $clusterClaim && -n $required ]]
   then
@@ -407,7 +408,7 @@ function getClusterPool {
   local clusterClaim=$1
   local required=$2
   local clusterPool
-  clusterPool=$(subIf oc --context cm get ClusterClaim $clusterClaim -o jsonpath='{.spec.clusterPoolName}')
+  clusterPool=$(subIf oc --context $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim $clusterClaim -o jsonpath='{.spec.clusterPoolName}')
   if [[ -z $clusterPool && -n $required ]]
   then
     fatal "The ClusterClaim $clusterClaim does not have a ClusterPool"
@@ -419,7 +420,7 @@ function getClusterDeployment {
   local clusterClaim=$1
   local required=$2
   local clusterDeployment
-  clusterDeployment=$(subIf oc --context cm get ClusterClaim $clusterClaim -o jsonpath='{.spec.namespace}')
+  clusterDeployment=$(subIf oc --context $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim $clusterClaim -o jsonpath='{.spec.namespace}')
   if [[ -z $clusterDeployment && -n $required ]]
   then
     fatal "The ClusterClaim $clusterClaim has not been assigned a ClusterDeployment"
@@ -438,7 +439,7 @@ function waitForClusterDeployment {
   count=0
   until [[ -n "$clusterDeployment" || $count -gt $CLUSTER_WAIT_MAX ]]
   do
-    clusterDeployment=$(ocWithContext cm get ClusterClaim "$clusterClaim" -o jsonpath='{.spec.namespace}')
+    clusterDeployment=$(ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim "$clusterClaim" -o jsonpath='{.spec.namespace}')
     count=$(($count + 1))
 
     if [[ -z $clusterDeployment && $count -le $CLUSTER_WAIT_MAX ]]
@@ -468,7 +469,7 @@ function waitForClusterDeployment {
     count=0
     until [[ $count -gt $HIBERNATE_WAIT_MAX || ($hibernating =~ $hibernatingDesired && $hibernatingReason =~ $hibernatingReasonDesired && $unreachable =~ $unreachableDesired) ]]
     do
-      conditionsJson=$(ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment -o json  | jq -r '.status.conditions')
+      conditionsJson=$(ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment get ClusterDeployment $clusterDeployment -o json  | jq -r '.status.conditions')
       hibernating=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Hibernating") | .status')
       hibernatingReason=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Hibernating") | .reason')
       unreachable=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Unreachable") | .status')
@@ -488,11 +489,11 @@ function waitForClusterDeployment {
 }
 
 function getHibernation {
-  ocWithContext cm get ClusterClaim $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-manager-hibernation}'
+  ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-manager-hibernation}'
 }
 
 function getLocks {
-  ocWithContext cm get ClusterClaim $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-manager-locks}'
+  ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-manager-locks}'
 }
 
 function checkLocks {
@@ -521,7 +522,7 @@ function setPowerState {
     oppositeState="Hibernating"
   fi
   
-  powerState=$(ocWithContext cm -n $clusterDeployment get ClusterDeployment $clusterDeployment -o json | jq -r '.spec.powerState')
+  powerState=$(ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment get ClusterDeployment $clusterDeployment -o json | jq -r '.spec.powerState')
   if [[ $powerState != $state ]]
   then
     checkLocks $claim
@@ -536,7 +537,7 @@ function setPowerState {
   value: $state
 EOF
   )
-    ignoreOutput ocWithContext cm -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
+    ignoreOutput ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
   else
     verbose 1 "Power state is already $powerState on ClusterDeployment $clusterDeployment"
   fi
@@ -544,7 +545,7 @@ EOF
 
 function enableServiceAccounts {
   local claim=$1
-  claimServiceAccountSubjects=$(sub oc --context cm get ClusterClaim $claim -o json | jq -r ".spec.subjects | map(select(.name == \"system:serviceaccounts:${CLUSTERPOOL_TARGET_NAMESPACE}\")) | length")
+  claimServiceAccountSubjects=$(sub oc --context $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim $claim -o json | jq -r ".spec.subjects | map(select(.name == \"system:serviceaccounts:${CLUSTERPOOL_TARGET_NAMESPACE}\")) | length")
   if [[ $claimServiceAccountSubjects -le 0 ]]
   then
     verbose 0 "Adding namespace service accounts as a claim subject"
@@ -557,7 +558,7 @@ function enableServiceAccounts {
     name: system:serviceaccounts:$CLUSTERPOOL_TARGET_NAMESPACE
 EOF
     )
-    cmd oc --context cm patch ClusterClaim $claim --type json --patch "$claimPatch"
+    cmd oc --context $CLUSTERPOOL_CONTEXT_NAME patch ClusterClaim $claim --type json --patch "$claimPatch"
   fi
 }
 
@@ -580,7 +581,7 @@ function enableHibernation {
 EOF
   )
   verbose 1 "Opting-in for hibernation on ClusterDeployment $clusterDeployment with hibernate=$hibernateValue"
-  cmd oc --context cm  -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
+  cmd oc --context $CLUSTERPOOL_CONTEXT_NAME  -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
 }
 
 function enableSchedule {
@@ -610,8 +611,8 @@ EOF
 EOF
   )
   verbose 1 "Annotating ClusterClaim $claim"
-  cmdTry oc --context cm patch ClusterClaim $claim --type json --patch "$ensureAnnotations"
-  cmd oc --context cm patch ClusterClaim $claim --type json --patch "$claimPatch"
+  cmdTry oc --context $CLUSTERPOOL_CONTEXT_NAME patch ClusterClaim $claim --type json --patch "$ensureAnnotations"
+  cmd oc --context $CLUSTERPOOL_CONTEXT_NAME patch ClusterClaim $claim --type json --patch "$claimPatch"
   
   local hibernateValue="true"
   if [[ -n $(getLocks $claim) ]]
@@ -634,7 +635,7 @@ function disableHibernation {
 EOF
   )
   verbose 1 "Opting-out for hibernation on ClusterDeployment $clusterDeployment"
-  cmd oc --context cm -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
+  cmd oc --context $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
 }
 
 function disableSchedule {
@@ -653,13 +654,13 @@ function disableSchedule {
 EOF
   )
   verbose 1 "Removing annotation on ClusterClaim $claim"
-  cmdTry oc --context cm patch ClusterClaim $claim --type json --patch "$removeAnnotation"
+  cmdTry oc --context $CLUSTERPOOL_CONTEXT_NAME patch ClusterClaim $claim --type json --patch "$removeAnnotation"
 
   disableHibernation $claim
 }
 
 function getUsername {
-  ocWithContext cm whoami | rev | cut -d : -f 1 | rev
+  ocWithContext $CLUSTERPOOL_CONTEXT_NAME whoami | rev | cut -d : -f 1 | rev
 }
 
 function getLockId {
@@ -676,7 +677,7 @@ function addLock {
   local lockId=$(getLockId "$2")
   verbose 0 "Adding lock on $context for $lockId"
 
-  ocWithContext cm get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= (. // \"\" | split(\",\") + [\"$lockId\"] | unique | join(\",\"))" | ocWithContext cm replace -f -
+  ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= (. // \"\" | split(\",\") + [\"$lockId\"] | unique | join(\",\"))" | ocWithContext $CLUSTERPOOL_CONTEXT_NAME replace -f -
   disableHibernation $context
 }
 
@@ -687,10 +688,10 @@ function removeLock {
   if [[ -n "$allLocks" ]]
   then
     verbose 0 "Removing all locks on $context"
-    ocWithContext cm get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= \"\"" | ocWithContext cm replace -f -
+    ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= \"\"" | ocWithContext $CLUSTERPOOL_CONTEXT_NAME replace -f -
   else
     verbose 0 "Removing lock on $context for $lockId"
-    ocWithContext cm get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= (. // \"\" | split(\",\") - [\"$lockId\"] | unique | join(\",\"))"   | ocWithContext cm replace -f -
+    ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-manager-locks\"] |= (. // \"\" | split(\",\") - [\"$lockId\"] | unique | join(\",\"))"   | ocWithContext $CLUSTERPOOL_CONTEXT_NAME replace -f -
   fi
   local locks=$(getLocks $1)
   if [[ -n $locks ]]
@@ -753,7 +754,7 @@ function getCreds {
   # Use lifeguard/clusterclaims/get_credentials.sh to get the credentionals for the cluster
   export CLUSTERCLAIM_NAME=$1
   export CLUSTERPOOL_TARGET_NAMESPACE
-  ignoreOutput withContext cm dirSensitiveCmd $(dependency lifeguard/clusterclaims/get_credentials.sh)
+  ignoreOutput withContext $CLUSTERPOOL_CONTEXT_NAME dirSensitiveCmd $(dependency lifeguard/clusterclaims/get_credentials.sh)
 }
 
 function firstField {
@@ -811,7 +812,7 @@ function enhanceClusterClaimOutput {
   local currentTimestamp timestamp age
   declare -A powerstateMap
   declare -A hibernateMap
-  clusterDeployments="$(ocWithContext cm get ClusterDeployments -A -L hibernate)\n"
+  clusterDeployments="$(ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterDeployments -A -L hibernate)\n"
   
   # Process ClusterDeployment lines and index POWERSTATE and HIBERNATE by NAME
   while IFS='' read -r line

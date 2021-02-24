@@ -11,7 +11,7 @@ function with_usage {
   errEcho "    hibernating, it is resumed"
   errEcho
   errEcho "    CONTEXT is the name of a kubeconfig context"
-  errEcho "        'cm' context refers to the ClusterPool host"
+  errEcho "        '$CLUSTERPOOL_CONTEXT_NAME' context refers to the ClusterPool host"
   errEcho "    COMMAND is any command, such as a script that invokes oc or kubectl"
   errEcho
   errEcho "    -f    Force operation if cluster is currently locked"

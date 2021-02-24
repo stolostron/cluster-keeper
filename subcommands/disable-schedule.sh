@@ -33,7 +33,7 @@ function disable_schedule {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot control hibernation for the ClusterPool host"
       ;;
     *)

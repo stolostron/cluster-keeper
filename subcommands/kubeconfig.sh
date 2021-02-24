@@ -33,7 +33,7 @@ function kubeconfig {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot show kubeconfig file location for the ClusterPool host"
       ;;
     *)

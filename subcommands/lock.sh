@@ -37,7 +37,7 @@ function lock {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot lock ClusterPool host"
       ;;
     *)

@@ -53,9 +53,9 @@ function delete {
   export CLUSTERPOOL_TARGET_NAMESPACE
   if [[ -z "$CONFIRM_DELETION" ]]
   then
-    withContext cm dirSensitiveCmd $(dependency lifeguard/clusterclaims/delete.sh)
+    withContext $CLUSTERPOOL_CONTEXT_NAME dirSensitiveCmd $(dependency lifeguard/clusterclaims/delete.sh)
   else
-    withContext cm dirSensitiveCmd $(dependency lifeguard/clusterclaims/delete.sh) << EOF
+    withContext $CLUSTERPOOL_CONTEXT_NAME dirSensitiveCmd $(dependency lifeguard/clusterclaims/delete.sh) << EOF
 Y
 EOF
   fi

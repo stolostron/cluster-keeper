@@ -38,7 +38,7 @@ function creds {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot display credentials for the ClusterPool host"
       ;;
     *)

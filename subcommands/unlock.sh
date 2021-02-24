@@ -38,7 +38,7 @@ function unlock {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot unlock ClusterPool host"
       ;;
     *)

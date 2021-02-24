@@ -34,7 +34,7 @@ function hibernate {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot hibernate ClusterPool host"
       ;;
     *)

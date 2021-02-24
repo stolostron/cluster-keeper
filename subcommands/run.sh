@@ -34,7 +34,7 @@ function run {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot resume ClusterPool host"
       ;;
     *)

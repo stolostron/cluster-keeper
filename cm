@@ -57,6 +57,6 @@ else
     verbose -1 "WARNING: KUBECONFIG is set and is being ignored by $(basename ${0})"
     unset KUBECONFIG
   fi
-  verifyContext cm
+  verifyContext $CLUSTERPOOL_CONTEXT_NAME
   $subcommandFunction "$@"
 fi

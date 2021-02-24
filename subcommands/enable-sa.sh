@@ -21,7 +21,7 @@ function enable_sa {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot enable service accounts for the ClusterPool host"
       ;;
     *)

@@ -34,7 +34,7 @@ function pw {
     context=$(current)
   fi
   case $context in
-    cm)
+    $CLUSTERPOOL_CONTEXT_NAME)
       fatal "Cannot copy password for the ClusterPool host"
       ;;
     *)

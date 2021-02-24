@@ -20,13 +20,13 @@ function list_usage {
 function list {
   case $(echo "$1" | tr '[:upper:]' '[:lower:]') in
     pool*|cp*|clusterpool*)
-      ocWithContext cm get ClusterPools
+      ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterPools
       ;;
     claim*|cc*|clusterclaim*)
-      ocWithContext cm get ClusterClaims -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS" | enhanceClusterClaimOutput
+      ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaims -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS" | enhanceClusterClaimOutput
       ;;
     cluster*|cd*|clusterdeployment*)
-      ocWithContext cm get ClusterDeployments -A -L hibernate
+      ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterDeployments -A -L hibernate
       ;;
     *)
       list_usage
