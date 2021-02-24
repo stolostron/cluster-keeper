@@ -9,7 +9,7 @@ function lock_usage {
   errEcho "    $(lock_description)"
   errEcho "    A locked cluster will not be hibernated/resumed on schedule"
   errEcho "    Other users are prevented from running certain subcommands on locked"
-  errEcho "    clusters, like 'cm run', 'cm hibernate', and 'cm delete'"
+  errEcho "    clusters, like 'ck run', 'ck hibernate', and 'ck delete'"
   errEcho
   errEcho "    CONTEXT is the name of a kubeconfig context that matches a ClusterClaim"
   errEcho

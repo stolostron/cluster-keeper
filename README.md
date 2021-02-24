@@ -2,7 +2,7 @@
 
 Cluster Keeper provides a CLI for managing squad usage of multiple OpenShift clusters via [Hive](https://github.com/openshift/hive) `ClusterPools`, `ClusterClaims`, and `ClusterDeployments`. It is compatible with scheduled hibernation provided by [hibernate-cronjob](https://github.com/open-cluster-management/hibernate-cronjob).
 
-With the `cm` CLI you can:
+With the `ck` CLI you can:
 - List and get ClusterPools, ClusterClaims, and ClusterDeployments
 - Create and delete clusters
 - Run and hibernate clusters manually
@@ -12,7 +12,7 @@ With the `cm` CLI you can:
 
 When any command requires communication with a cluster, Cluster Keeper will resume the cluster if it is currently hibernating (unless it is currently locked).
 
-Except for the `cm use` command, Cluster Keeper will never change your current kubeconfig context. But Cluster Keeper creates a context for each cluster named according to the ClusterClaim. For any command that takes the name of a ClusterClaim, Cluster Keeper will infer it from the current context if it is not provided.
+Except for the `ck use` command, Cluster Keeper will never change your current kubeconfig context. But Cluster Keeper creates a context for each cluster named according to the ClusterClaim. For any command that takes the name of a ClusterClaim, Cluster Keeper will infer it from the current context if it is not provided.
 
 Cluster Keeper leverages [Lifeguard](https://github.com/open-cluster-management/lifeguard) for many functions, but it sets the environment variables for you and does not require you to change directories.
 
@@ -27,9 +27,9 @@ Cluster Keeper leverages [Lifeguard](https://github.com/open-cluster-management/
    cd cluster-manager
    cp user.app-squad user.env
    ```
-1. (_Optional, but highly recommended_) Create a symlink to `cm` on your path. For example:
+1. (_Optional, but highly recommended_) Create a symlink to `ck` on your path. For example:
    ```
-   ln -s $(pwd)/cm /usr/local/bin/cm
+   ln -s $(pwd)/ck /usr/local/bin/ck
    ```
 1. Make sure you have all the [dependencies](#dependencies).
 
