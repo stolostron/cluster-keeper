@@ -1,6 +1,8 @@
 # Cluster Keeper
+<img align="right" src="logo.png" alt="a hibernating bear hugs a cluster" width="256px" />
 
-Cluster Keeper provides a CLI for managing usage of multiple OpenShift clusters via [Hive](https://github.com/openshift/hive) `ClusterPools`, `ClusterClaims`, and `ClusterDeployments`. It is compatible with scheduled hibernation provided by [hibernate-cronjob](https://github.com/open-cluster-management/hibernate-cronjob).
+Cluster Keeper provides a CLI for managing usage of multiple OpenShift clusters via [Hive](https://github.com/openshift/hive) `ClusterPools`, `ClusterClaims`, and `ClusterDeployments`.
+It is compatible with scheduled hibernation provided by [hibernate-cronjob](https://github.com/open-cluster-management/hibernate-cronjob).
 
 With the `ck` CLI you can:
 - List and get ClusterPools, ClusterClaims, and ClusterDeployments
