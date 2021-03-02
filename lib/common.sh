@@ -823,12 +823,12 @@ function enhanceClusterClaimOutput {
     then
       # Header line; find index of POWERSTATE and HIBERNATE columns
       powerstateIndex=$(indexOf "$line" POWERSTATE)
-      hiberateIndex=$(indexOf "$line" HIBERNATE)
+      hibernateIndex=$(indexOf "$line" HIBERNATE)
     else 
       # Data lines; map POWERSTATE and HIBERNATE
       cdName=$(firstField $line)
       powerstateMap[$cdName]=${line:${powerstateIndex}:11} # Longest states are 11 characters (Unsupported, Hibernating)
-      hibernateMap[$cdName]="${line:${hiberateIndex}:4}  " # All values are 4 characters (true, skip), so add 2 to cover <none>
+      hibernateMap[$cdName]="${line:${hibernateIndex}:4}" # All values are 4 characters (true, skip) 
     fi
   done <<< $clusterDeployments
 
@@ -850,7 +850,8 @@ function enhanceClusterClaimOutput {
     fi
     if [[ -n "${hibernateMap[$clusterName]}" ]]
     then
-      line=$(replaceString "$line" "${hibernateMap[$clusterName]}" $hibernateIndex)
+      # All hibernate values are 4 characters (true, skip), so add 2 to cover <none>
+      line=$(replaceString "$line" "${hibernateMap[$clusterName]}  " $hibernateIndex)
     fi
     if [[ $(uname) = Darwin ]]
     then
