@@ -38,5 +38,5 @@ function with {
   local context=$1
   shift
 
-  withContext "$context" "$@"
+  withContext "$context" command "$@"
 }
