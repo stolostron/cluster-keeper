@@ -157,7 +157,7 @@ function notImplemented {
 
 # Creates and logs in as a new ServiceAccount in the cluster pool target namespace
 # Account is named for the current user
-function newCMServiceAccount {
+function newCKServiceAccount {
   local user=$1
   local serviceAccount=$(echo "$user" | tr '[:upper:]' '[:lower:]' | tr -cd "[:alnum:]-_")
   verbose 0 "Creating ServiceAccount $serviceAccount"
@@ -177,66 +177,71 @@ function createContext {
 
   if [[ $context == $CLUSTERPOOL_CONTEXT_NAME ]]
   then
-    createCMContext
+    createCKContext
     return $?
   fi
 
-  local kubeconfig
+  local kubeconfig kubeconfig_temp
   kubeconfig=$(getCredsFile "$context" "lifeguard/clusterclaims/${context}/kubeconfig" "true")
   verbose 0 "Preparing kubeconfig $kubeconfig"
+  local kubeconfig_temp=$(mktemp)
+  cp $kubeconfig $kubeconfig_temp
   
   # Rename admin context to match ClusterClaim name
-  cmd oc --kubeconfig $kubeconfig config rename-context "$(KUBECONFIG=$kubeconfig oc config current-context)" "$context"
+  cmd oc --kubeconfig $kubeconfig_temp config rename-context "$(KUBECONFIG=$kubeconfig_temp oc config current-context)" "$context"
   
   # Export the client certificate and key to temporary files
   local adminUserJson
-  adminUserJson=$(oc --kubeconfig $kubeconfig config view --flatten -o json | jq -r '.users[] | select(.name == "admin") | .user')
+  adminUserJson=$(oc --kubeconfig $kubeconfig_temp config view --flatten -o json | jq -r '.users[] | select(.name == "admin") | .user')
   local clientCertificate=$(mktemp)
   local clientKey=$(mktemp)
   echo "$adminUserJson" | jq -r '.["client-certificate-data"]' | base64 --decode > "$clientCertificate"
   echo "$adminUserJson" | jq -r '.["client-key-data"]' | base64 --decode > "$clientKey"
   
-  # Create new user with name to match ClusterClaim, then clean up temp files
-  cmd oc --kubeconfig $kubeconfig config set-credentials $context --client-certificate "$clientCertificate" --client-key "$clientKey"
+  # Create new user with name to match ClusterClaim
+  cmd oc --kubeconfig $kubeconfig_temp config set-credentials $context --client-certificate "$clientCertificate" --client-key "$clientKey"
   
   # Update context to use new user and delete old user
-  cmd oc --kubeconfig $kubeconfig config set-context $context --user $context
-  cmd oc --kubeconfig $kubeconfig config unset users.admin
+  cmd oc --kubeconfig $kubeconfig_temp config set-context $context --user $context
+  cmd oc --kubeconfig $kubeconfig_temp config unset users.admin
 
   # Create ServiceAccount and ClusterRoleBinding in order to obtain token
   local user=$(getUsername)
   verbose 0 "Creating ServiceAccount $user"
-  cmdTry oc --kubeconfig $kubeconfig -n default create serviceaccount $user
+  cmdTry oc --kubeconfig $kubeconfig_temp -n default create serviceaccount $user
   verbose 1 "Creating ClusterRoleBinding $user"
-  cmdTry oc --kubeconfig $kubeconfig create clusterrolebinding $user --clusterrole=cluster-admin --serviceaccount=default:$user
+  cmdTry oc --kubeconfig $kubeconfig_temp create clusterrolebinding $user --clusterrole=cluster-admin --serviceaccount=default:$user
   verbose 1 "Looking up token secret"
-  local tokenSecret=$(sub oc --kubeconfig $kubeconfig -n default get ServiceAccount $user -o json | jq -r '.secrets | map(select(.name | test("token")))[0] | .name')
+  local tokenSecret=$(sub oc --kubeconfig $kubeconfig_temp -n default get ServiceAccount $user -o json | jq -r '.secrets | map(select(.name | test("token")))[0] | .name')
   verbose 1 "Extracting token"
-  local token=$(sub oc --kubeconfig $kubeconfig -n default get Secret $tokenSecret -o json | jq -r '.data.token' | base64 --decode)
-  cmd oc --kubeconfig $kubeconfig config set-credentials $context --token $token
+  local token=$(sub oc --kubeconfig $kubeconfig_temp -n default get Secret $tokenSecret -o json | jq -r '.data.token' | base64 --decode)
+  cmd oc --kubeconfig $kubeconfig_temp config set-credentials $context --token $token
+
+  # Generate flattened ClusterClaim kubeconfig
+  oc --kubeconfig $kubeconfig_temp config view --flatten > "$kubeconfig"
 
   local timestamp=$(date "+%s")
   local user_kubeconfig="${HOME}/.kube/config"
   local new_user_kubeconfig="${user_kubeconfig}.new"
   local backup_user_kubeconfig="${user_kubeconfig}.backup-${timestamp}"
   verbose 0 "Backing up $user_kubeconfig to $backup_user_kubeconfig"
-  cp "$user_kubeconfig" "$backup_user_kubeconfig"
+  cmd cp "$user_kubeconfig" "$backup_user_kubeconfig"
 
   # Remove pre-existing context and user from user kubeconfig
   cmdTry oc config delete-context $context
   cmdTry oc config unset users.${context}
   
-  # Generate flattened config and delete temp files
+  # Generate flattened user kubeconfig and delete temp files
   KUBECONFIG="${user_kubeconfig}:${kubeconfig}" oc config view --flatten > "$new_user_kubeconfig"
-  rm "$clientCertificate" "$clientKey"
+  cmd rm "$clientCertificate" "$clientKey" "$kubeconfig_temp"
   
-  mv "$new_user_kubeconfig" "$user_kubeconfig"
+  cmd mv "$new_user_kubeconfig" "$user_kubeconfig"
   verbose 0 "${user_kubeconfig} updated with new context $context"
 }
 
 # Renames the current context to '$CLUSTERPOOL_CONTEXT_NAME', making sure to use a ServiceAccount
 # Can use pre-existing account or create a new one
-function createCMContext {
+function createCKContext {
   local server=$(subIf oc whoami --show-server)
   if [[ $server != $CLUSTERPOOL_CLUSTER || $(subRC oc status) -ne 0 ]]
   then
@@ -245,7 +250,7 @@ function createCMContext {
     local user=$(subIf oc whoami)
     if ! [[ $user =~ ^system:serviceaccount:${CLUSTERPOOL_TARGET_NAMESPACE}: ]]
     then
-      newCMServiceAccount $user
+      newCKServiceAccount $user
     fi
 
     verbose 0 "Renaming current context to \"$CLUSTERPOOL_CONTEXT_NAME\""
