@@ -159,7 +159,7 @@ function notImplemented {
 # Account is named for the current user
 function newCMServiceAccount {
   local user=$1
-  local serviceAccount=$(echo "$user" | tr A-Z a-z)
+  local serviceAccount=$(echo "$user" | tr A-Z a-z | tr -cd "[:alnum:]-_")
   verbose 0 "Creating ServiceAccount $serviceAccount"
   cmdTry oc -n $CLUSTERPOOL_TARGET_NAMESPACE create serviceaccount $serviceAccount
   verbose 1 "Looking up token secret"
