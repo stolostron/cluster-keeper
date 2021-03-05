@@ -37,9 +37,9 @@ function get {
     pool*|cp*|clusterpool*)
       if [[ -n $claim ]]
       then
-        ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterPool $(getClusterPool $(current) "required")
+        ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterpools.hive.openshift.io $(getClusterPool $(current) "required")
       else
-        if [[ $(subRC oc --context $CLUSTERPOOL_CONTEXT_NAME get ClusterPool $name) -eq 0 ]]
+        if [[ $(subRC oc --context $CLUSTERPOOL_CONTEXT_NAME get clusterpools.hive.openshift.io $name) -eq 0 ]]
         then
           shift
           clusterPool=$name
@@ -50,13 +50,13 @@ function get {
         else
           clusterPool=$(getClusterPool $(current) "required")
         fi
-        ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterPool $clusterPool "$@"
+        ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterpools.hive.openshift.io $clusterPool "$@"
       fi
       ;;
     claim*|cc*|clusterclaim*)
       if [[ -n $claim ]]
       then
-        ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim $claim -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS" | enhanceClusterClaimOutput
+        ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive.openshift.io $claim -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS" | enhanceClusterClaimOutput
       else
         clusterClaim=$(getClusterClaim $name)
         if [[ -z $clusterClaim ]]
@@ -67,9 +67,9 @@ function get {
         fi
         if [[ -z "$@" ]]
         then
-          ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim $clusterClaim -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS" | enhanceClusterClaimOutput
+          ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive.openshift.io $clusterClaim -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS" | enhanceClusterClaimOutput
         else  
-          ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaim $clusterClaim "$@"
+          ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive.openshift.io $clusterClaim "$@"
         fi
       fi
       ;;
@@ -77,9 +77,9 @@ function get {
       if [[ -n $claim ]]
       then
         local clusterDeployment=$(getClusterDeployment $(current) "required")
-        ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment get ClusterDeployment $clusterDeployment -L hibernate
+        ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment get clusterdeployments.hive.openshift.io $clusterDeployment -L hibernate
       else
-        if [[ $(subRC oc --context $CLUSTERPOOL_CONTEXT_NAME -n $name get ClusterDeployment $name) -eq 0 ]]
+        if [[ $(subRC oc --context $CLUSTERPOOL_CONTEXT_NAME -n $name get clusterdeployments.hive.openshift.io $name) -eq 0 ]]
         then
           shift
           clusterDeployment=$name
@@ -90,7 +90,7 @@ function get {
         else
           clusterDeployment=$(getClusterDeployment $(current) "required")
         fi
-        ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment get ClusterDeployment $clusterDeployment -L hibernate "$@"
+        ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment get clusterdeployments.hive.openshift.io $clusterDeployment -L hibernate "$@"
       fi
       ;;
     *)

@@ -26,7 +26,7 @@ function state {
       ;;
     *)
       clusterDeployment=$(getClusterDeployment $context "required")
-      ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment get ClusterDeployment $clusterDeployment -o custom-columns=PowerState:'.status.conditions[?(@.type=="Hibernating")].reason' --no-headers
+      ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment get clusterdeployments.hive.openshift.io $clusterDeployment -o custom-columns=PowerState:'.status.conditions[?(@.type=="Hibernating")].reason' --no-headers
       ;;
   esac
 }

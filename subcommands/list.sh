@@ -21,13 +21,13 @@ function list_usage {
 function list {
   case $(echo "$1" | tr '[:upper:]' '[:lower:]') in
     pool*|cp*|clusterpool*)
-      ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterPools
+      ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterpools.hive.openshift.io
       ;;
     claim*|cc*|clusterclaim*)
-      ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterClaims -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS" | enhanceClusterClaimOutput
+      ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive.openshift.io -o custom-columns="$CLUSTERCLAIM_CUSTOM_COLUMNS" | enhanceClusterClaimOutput
       ;;
     cluster*|cd*|clusterdeployment*)
-      ocWithContext $CLUSTERPOOL_CONTEXT_NAME get ClusterDeployments -A -L hibernate
+      ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterdeployments.hive.openshift.io -A -L hibernate
       ;;
     *)
       list_usage
