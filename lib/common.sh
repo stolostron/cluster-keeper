@@ -110,12 +110,13 @@ function subRC {
 
 # Use to log command substitutions, ignoring errors
 # - command is logged to stderr if VERBOSITY is COMMAND_VERBOSITY or higher
-# - command stdout and stderr are logged to stderr if VERBOSITY is OUTPUT_VERBOSITY or higher
+# - command output logged to stderr if VERBOSITY is OUTPUT_VERBOSITY or higher
+# - stderr is not suppressed
 # - stdout is "returned" if command exits successfully
 function subIf {
   set +e
   logCommand $@
-  OUTPUT=$("$@" 2>&1)
+  OUTPUT=$("$@")
   RC=$?
   logOutput "$OUTPUT"
   if [[ $RC -eq 0 ]]
