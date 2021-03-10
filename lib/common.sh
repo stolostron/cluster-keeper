@@ -545,7 +545,7 @@ function setPowerState {
   value: $state
 EOF
   )
-    ignoreOutput ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
+    ignoreOutput ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment patch clusterdeployments.hive.openshift.io $clusterDeployment --type json --patch "$deploymentPatch"
   else
     verbose 1 "Power state is already $powerState on ClusterDeployment $clusterDeployment"
   fi
@@ -566,7 +566,7 @@ function enableServiceAccounts {
     name: system:serviceaccounts:$CLUSTERPOOL_TARGET_NAMESPACE
 EOF
     )
-    cmd oc --context $CLUSTERPOOL_CONTEXT_NAME patch ClusterClaim $claim --type json --patch "$claimPatch"
+    cmd oc --context $CLUSTERPOOL_CONTEXT_NAME patch clusterclaims.hive.openshift.io $claim --type json --patch "$claimPatch"
   fi
 }
 
@@ -589,7 +589,7 @@ function enableHibernation {
 EOF
   )
   verbose 1 "Opting-in for hibernation on ClusterDeployment $clusterDeployment with hibernate=$hibernateValue"
-  cmd oc --context $CLUSTERPOOL_CONTEXT_NAME  -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
+  cmd oc --context $CLUSTERPOOL_CONTEXT_NAME  -n $clusterDeployment patch clusterdeployments.hive.openshift.io $clusterDeployment --type json --patch "$deploymentPatch"
 }
 
 function enableSchedule {
@@ -619,8 +619,8 @@ EOF
 EOF
   )
   verbose 1 "Annotating ClusterClaim $claim"
-  cmdTry oc --context $CLUSTERPOOL_CONTEXT_NAME patch ClusterClaim $claim --type json --patch "$ensureAnnotations"
-  cmd oc --context $CLUSTERPOOL_CONTEXT_NAME patch ClusterClaim $claim --type json --patch "$claimPatch"
+  cmdTry oc --context $CLUSTERPOOL_CONTEXT_NAME patch clusterclaims.hive.openshift.io $claim --type json --patch "$ensureAnnotations"
+  cmd oc --context $CLUSTERPOOL_CONTEXT_NAME patch clusterclaims.hive.openshift.io $claim --type json --patch "$claimPatch"
   
   local hibernateValue="true"
   if [[ -n $(getLocks $claim) ]]
@@ -643,7 +643,7 @@ function disableHibernation {
 EOF
   )
   verbose 1 "Opting-out for hibernation on ClusterDeployment $clusterDeployment"
-  cmd oc --context $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment patch ClusterDeployment $clusterDeployment --type json --patch "$deploymentPatch"
+  cmd oc --context $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment patch clusterdeployments.hive.openshift.io $clusterDeployment --type json --patch "$deploymentPatch"
 }
 
 function disableSchedule {
@@ -662,7 +662,7 @@ function disableSchedule {
 EOF
   )
   verbose 1 "Removing annotation on ClusterClaim $claim"
-  cmdTry oc --context $CLUSTERPOOL_CONTEXT_NAME patch ClusterClaim $claim --type json --patch "$removeAnnotation"
+  cmdTry oc --context $CLUSTERPOOL_CONTEXT_NAME patch clusterclaims.hive.openshift.io $claim --type json --patch "$removeAnnotation"
 
   disableHibernation $claim
 }
