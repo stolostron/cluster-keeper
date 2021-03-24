@@ -34,7 +34,7 @@ function usage {
   abort
 }
 
-while getopts :v:h o 
+while getopts :v:h o
 do case "$o" in
   h)  HELP="true";;
   v)  VERBOSITY="$OPTARG";;
@@ -55,7 +55,7 @@ then
 else
   if [[ -n $KUBECONFIG ]]
   then
-    verbose -1 "WARNING: KUBECONFIG is set and is being ignored by $(basename ${0})"
+    verbose -1 "WARNING: KUBECONFIG is set and is being ignored by $CLUSTERPOOL_CONTEXT_NAME"
     unset KUBECONFIG
   fi
   verifyContext $CLUSTERPOOL_CONTEXT_NAME
