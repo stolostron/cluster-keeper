@@ -55,7 +55,7 @@ then
 else
   if [[ -n $KUBECONFIG ]]
   then
-    verbose -1 "WARNING: KUBECONFIG is set and is being ignored by $CLUSTERPOOL_CONTEXT_NAME"
+    verbose -1 "WARNING: KUBECONFIG is set and is being ignored by $(basename ${0}) (CLUSTERPOOL_CONTEXT_NAME=${CLUSTERPOOL_CONTEXT_NAME})"
     unset KUBECONFIG
   fi
   verifyContext $CLUSTERPOOL_CONTEXT_NAME
