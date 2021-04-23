@@ -43,7 +43,6 @@ function creds {
       fatal "Cannot display credentials for the ClusterPool host"
       ;;
     *)
-      verifyContext "$context"
       if [[ -z $PROPERTY ]]
       then
         displayCreds $context $FETCH_FRESH
