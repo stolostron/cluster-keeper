@@ -403,7 +403,7 @@ function getClusterClaim {
   if ! [[ "$name" =~ [/:] ]]
   then
     local clusterClaim
-    clusterClaim=$(subIf oc --context $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive.openshift.io $name -o jsonpath='{.metadata.name}')
+    clusterClaim=$(subIf oc --context $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive $name -o jsonpath='{.metadata.name}')
   fi
   if [[ -z $clusterClaim && -n $required ]]
   then
@@ -416,7 +416,7 @@ function getClusterPool {
   local clusterClaim=$1
   local required=$2
   local clusterPool
-  clusterPool=$(subIf oc --context $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive.openshift.io $clusterClaim -o jsonpath='{.spec.clusterPoolName}')
+  clusterPool=$(subIf oc --context $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive $clusterClaim -o jsonpath='{.spec.clusterPoolName}')
   if [[ -z $clusterPool && -n $required ]]
   then
     fatal "The ClusterClaim $clusterClaim does not have a ClusterPool"
@@ -428,7 +428,7 @@ function getClusterDeployment {
   local clusterClaim=$1
   local required=$2
   local clusterDeployment
-  clusterDeployment=$(subIf oc --context $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive.openshift.io $clusterClaim -o jsonpath='{.spec.namespace}')
+  clusterDeployment=$(subIf oc --context $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive $clusterClaim -o jsonpath='{.spec.namespace}')
   if [[ -z $clusterDeployment && -n $required ]]
   then
     fatal "The ClusterClaim $clusterClaim has not been assigned a ClusterDeployment"
@@ -447,7 +447,7 @@ function waitForClusterDeployment {
   count=0
   until [[ -n "$clusterDeployment" || $count -gt $CLUSTER_WAIT_MAX ]]
   do
-    clusterDeployment=$(ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive.openshift.io "$clusterClaim" -o jsonpath='{.spec.namespace}')
+    clusterDeployment=$(ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive "$clusterClaim" -o jsonpath='{.spec.namespace}')
     count=$(($count + 1))
 
     if [[ -z $clusterDeployment && $count -le $CLUSTER_WAIT_MAX ]]
@@ -477,7 +477,7 @@ function waitForClusterDeployment {
     count=0
     until [[ $count -gt $HIBERNATE_WAIT_MAX || ($hibernating =~ $hibernatingDesired && $hibernatingReason =~ $hibernatingReasonDesired && $unreachable =~ $unreachableDesired) ]]
     do
-      conditionsJson=$(ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment get clusterdeployments.hive.openshift.io $clusterDeployment -o json  | jq -r '.status.conditions')
+      conditionsJson=$(ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment get clusterdeployments.hive $clusterDeployment -o json  | jq -r '.status.conditions')
       hibernating=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Hibernating") | .status')
       hibernatingReason=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Hibernating") | .reason')
       unreachable=$(echo "$conditionsJson" | jq -r '.[] | select(.type == "Unreachable") | .status')
@@ -497,11 +497,11 @@ function waitForClusterDeployment {
 }
 
 function getHibernation {
-  ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive.openshift.io $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-keeper-hibernation}'
+  ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-keeper-hibernation}'
 }
 
 function getLocks {
-  ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive.openshift.io $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-keeper-locks}'
+  ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive $1 -o jsonpath='{.metadata.annotations.open-cluster-management\.io/cluster-keeper-locks}'
 }
 
 function checkLocks {
@@ -530,7 +530,7 @@ function setPowerState {
     oppositeState="Hibernating"
   fi
   
-  powerState=$(ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment get clusterdeployments.hive.openshift.io $clusterDeployment -o json | jq -r '.spec.powerState')
+  powerState=$(ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment get clusterdeployments.hive $clusterDeployment -o json | jq -r '.spec.powerState')
   if [[ $powerState != $state ]]
   then
     checkLocks $claim
@@ -545,7 +545,7 @@ function setPowerState {
   value: $state
 EOF
   )
-    ignoreOutput ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment patch clusterdeployments.hive.openshift.io $clusterDeployment --type json --patch "$deploymentPatch"
+    ignoreOutput ocWithContext $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment patch clusterdeployments.hive $clusterDeployment --type json --patch "$deploymentPatch"
   else
     verbose 1 "Power state is already $powerState on ClusterDeployment $clusterDeployment"
   fi
@@ -553,7 +553,7 @@ EOF
 
 function enableServiceAccounts {
   local claim=$1
-  claimServiceAccountSubjects=$(sub oc --context $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive.openshift.io $claim -o json | jq -r ".spec.subjects | map(select(.name == \"system:serviceaccounts:${CLUSTERPOOL_TARGET_NAMESPACE}\")) | length")
+  claimServiceAccountSubjects=$(sub oc --context $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive $claim -o json | jq -r ".spec.subjects | map(select(.name == \"system:serviceaccounts:${CLUSTERPOOL_TARGET_NAMESPACE}\")) | length")
   if [[ $claimServiceAccountSubjects -le 0 ]]
   then
     verbose 0 "Adding namespace service accounts as a claim subject"
@@ -566,7 +566,7 @@ function enableServiceAccounts {
     name: system:serviceaccounts:$CLUSTERPOOL_TARGET_NAMESPACE
 EOF
     )
-    cmd oc --context $CLUSTERPOOL_CONTEXT_NAME patch clusterclaims.hive.openshift.io $claim --type json --patch "$claimPatch"
+    cmd oc --context $CLUSTERPOOL_CONTEXT_NAME patch clusterclaims.hive $claim --type json --patch "$claimPatch"
   fi
 }
 
@@ -589,7 +589,7 @@ function enableHibernation {
 EOF
   )
   verbose 1 "Opting-in for hibernation on ClusterDeployment $clusterDeployment with hibernate=$hibernateValue"
-  cmd oc --context $CLUSTERPOOL_CONTEXT_NAME  -n $clusterDeployment patch clusterdeployments.hive.openshift.io $clusterDeployment --type json --patch "$deploymentPatch"
+  cmd oc --context $CLUSTERPOOL_CONTEXT_NAME  -n $clusterDeployment patch clusterdeployments.hive $clusterDeployment --type json --patch "$deploymentPatch"
 }
 
 function enableSchedule {
@@ -619,8 +619,8 @@ EOF
 EOF
   )
   verbose 1 "Annotating ClusterClaim $claim"
-  cmdTry oc --context $CLUSTERPOOL_CONTEXT_NAME patch clusterclaims.hive.openshift.io $claim --type json --patch "$ensureAnnotations"
-  cmd oc --context $CLUSTERPOOL_CONTEXT_NAME patch clusterclaims.hive.openshift.io $claim --type json --patch "$claimPatch"
+  cmdTry oc --context $CLUSTERPOOL_CONTEXT_NAME patch clusterclaims.hive $claim --type json --patch "$ensureAnnotations"
+  cmd oc --context $CLUSTERPOOL_CONTEXT_NAME patch clusterclaims.hive $claim --type json --patch "$claimPatch"
   
   local hibernateValue="true"
   if [[ -n $(getLocks $claim) ]]
@@ -643,7 +643,7 @@ function disableHibernation {
 EOF
   )
   verbose 1 "Opting-out for hibernation on ClusterDeployment $clusterDeployment"
-  cmd oc --context $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment patch clusterdeployments.hive.openshift.io $clusterDeployment --type json --patch "$deploymentPatch"
+  cmd oc --context $CLUSTERPOOL_CONTEXT_NAME -n $clusterDeployment patch clusterdeployments.hive $clusterDeployment --type json --patch "$deploymentPatch"
 }
 
 function disableSchedule {
@@ -662,7 +662,7 @@ function disableSchedule {
 EOF
   )
   verbose 1 "Removing annotation on ClusterClaim $claim"
-  cmdTry oc --context $CLUSTERPOOL_CONTEXT_NAME patch clusterclaims.hive.openshift.io $claim --type json --patch "$removeAnnotation"
+  cmdTry oc --context $CLUSTERPOOL_CONTEXT_NAME patch clusterclaims.hive $claim --type json --patch "$removeAnnotation"
 
   disableHibernation $claim
 }
@@ -685,7 +685,7 @@ function addLock {
   local lockId=$(getLockId "$2")
   verbose 0 "Adding lock on $context for $lockId"
 
-  ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive.openshift.io "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-keeper-locks\"] |= (. // \"\" | split(\",\") + [\"$lockId\"] | unique | join(\",\"))" | ocWithContext $CLUSTERPOOL_CONTEXT_NAME replace -f -
+  ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-keeper-locks\"] |= (. // \"\" | split(\",\") + [\"$lockId\"] | unique | join(\",\"))" | ocWithContext $CLUSTERPOOL_CONTEXT_NAME replace -f -
   disableHibernation $context
 }
 
@@ -696,10 +696,10 @@ function removeLock {
   if [[ -n "$allLocks" ]]
   then
     verbose 0 "Removing all locks on $context"
-    ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive.openshift.io "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-keeper-locks\"] |= \"\"" | ocWithContext $CLUSTERPOOL_CONTEXT_NAME replace -f -
+    ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-keeper-locks\"] |= \"\"" | ocWithContext $CLUSTERPOOL_CONTEXT_NAME replace -f -
   else
     verbose 0 "Removing lock on $context for $lockId"
-    ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive.openshift.io "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-keeper-locks\"] |= (. // \"\" | split(\",\") - [\"$lockId\"] | unique | join(\",\"))"   | ocWithContext $CLUSTERPOOL_CONTEXT_NAME replace -f -
+    ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterclaims.hive "$context" -o json | jq -r ".metadata.annotations[\"open-cluster-management.io/cluster-keeper-locks\"] |= (. // \"\" | split(\",\") - [\"$lockId\"] | unique | join(\",\"))"   | ocWithContext $CLUSTERPOOL_CONTEXT_NAME replace -f -
   fi
   local locks=$(getLocks $1)
   if [[ -n $locks ]]
@@ -820,7 +820,7 @@ function enhanceClusterClaimOutput {
   local currentTimestamp timestamp age
   declare -A powerstateMap
   declare -A hibernateMap
-  clusterDeployments="$(ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterdeployments.hive.openshift.io -A -L hibernate 2> /dev/null)\n"
+  clusterDeployments="$(ocWithContext $CLUSTERPOOL_CONTEXT_NAME get clusterdeployments.hive -A -L hibernate 2> /dev/null)\n"
   
   # Process ClusterDeployment lines and index POWERSTATE and HIBERNATE by NAME
   while IFS='' read -r line
