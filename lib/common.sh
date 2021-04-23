@@ -182,6 +182,10 @@ function createContext {
     return $?
   fi
 
+  # Make sure cluster is running
+  setPowerState "$context" "Running"
+  ignoreOutput waitForClusterDeployment $1 "Running"
+
   local kubeconfig kubeconfig_temp
   kubeconfig=$(getCredsFile "$context" "lifeguard/clusterclaims/${context}/kubeconfig" "true")
   verbose 0 "Preparing kubeconfig $kubeconfig"
@@ -756,8 +760,7 @@ function displayCreds {
 
 function getCreds {
   local powerState
-  setPowerState $1 "Running"
-  ignoreOutput waitForClusterDeployment $1 "Running"
+  ignoreOutput waitForClusterDeployment $1
   verbose 0 "Fetching credentials for ${1}"
   # Use lifeguard/clusterclaims/get_credentials.sh to get the credentionals for the cluster
   export CLUSTERCLAIM_NAME=$1
