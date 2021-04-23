@@ -16,18 +16,21 @@ function creds_usage {
   errEcho
   errEcho "    -f    Force operation if cluster is currently locked"
   errEcho "    -p    Extract a single property, like password or api_url"
-  errEcho "    -r    Refresh the credentials by fetching a fresh copy"
+  errEcho "    -c    Use the current credentials without fetching"
+  errEcho "    -r    Refresh the credentials by fetching a fresh copy (default)"
   errEcho
   abort
 }
 
 function creds {
+  FETCH_FRESH="true";
   OPTIND=1
-  while getopts :fp:r o 
+  while getopts :fp:cr o 
   do case "$o" in
     f)  export FORCE="true";;
     p)  PROPERTY="$OPTARG";;
-    r)  FETCH_FRESH="true";;
+    c)  FETCH_FRESH="";;
+    r)  FETCH_FRESH="true"; verbose -1 "WARNING: -r option is deprecated and will be removed in a future release";;
     [?]) creds_usage;;
     esac
   done

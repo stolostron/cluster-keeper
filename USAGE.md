@@ -125,7 +125,8 @@ usage: ck creds [OPTIONS] [CONTEXT]
 
     -f    Force operation if cluster is currently locked
     -p    Extract a single property, like password or api_url
-    -r    Refresh the credentials by fetching a fresh copy
+    -c    Use the current credentials without fetching
+    -r    Refresh the credentials by fetching a fresh copy (default)
 ```
 <sup><sub>[🔝 Back to top](#usage)</sub></sup>
 
