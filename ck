@@ -6,7 +6,7 @@ trap "exit 1" TERM
 export TOP_PID=$$
 
 DIR=$(dirname $(readlink $0 || echo $0))
-sh $DIR/lib/validateDeps.sh
+. $DIR/lib/validateDeps.sh
 . $DIR/lib/common.sh
 SUBCOMMANDS=$(ls $DIR/subcommands)
 for subcommand in $SUBCOMMANDS
