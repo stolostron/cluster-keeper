@@ -21,7 +21,7 @@ if [ "${OS}" == "darwin" ]; then
 fi
 
 
-# Validate sed is installed
+# Validate gsed is installed
 if [ "${OS}" == "darwin" ]; then
     SED="gsed"
     if [ ! -x "$(command -v ${SED})"  ]; then
