@@ -231,6 +231,8 @@ function createContext {
   local backup_user_kubeconfig="${user_kubeconfig}.backup-${timestamp}"
   verbose 0 "Backing up $user_kubeconfig to $backup_user_kubeconfig"
   cmd cp "$user_kubeconfig" "$backup_user_kubeconfig"
+  # Copy existing kubeconfig to .new to preserve permissions
+  cmd cp "$user_kubeconfig" "$new_user_kubeconfig"
 
   # Remove pre-existing context and user from user kubeconfig
   cmdTry oc config delete-context $context
