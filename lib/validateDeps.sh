@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Copyright Contributors to the Open Cluster Management project
 
-
 source ${DIR}/lib/logging.sh
 
 # Validate bash version is 4 or greater
