@@ -1,33 +1,41 @@
-#!/usr/bin/env bash
 # Copyright Contributors to the Open Cluster Management project
 
-source ${DIR}/lib/logging.sh
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+function macHint {
+  local package=$1
+  local extra=$2
+  if [ "${OS}" == "darwin" ]; then
+    verbose 0 "Install with \"brew install ${package}\" and try again. ${extra}"
+  fi
+}
+
+
+# Validate configuration file is present and load
+[[ -f $DIR/user.env ]] || fatal "user.env file not found"
+. $DIR/user.env
 
 # Validate bash version is 4 or greater
 if [ "${BASH_VERSINFO:-0}" -lt 4 ]
 then
-  error "DEPENDENCY NOT MET. bash version 4 or greater is required to run this tool. Found version ${BASH_VERSION}"
-  verbose 0 "On MacOS install with \"brew install bash\".  This bash must be first in your path, but need not be '/bin/bash' or your default login shell."
+  error "bash version 4 or greater is required to run this tool. Found version ${BASH_VERSION}"
+  macHint bash "This bash must be first in your path but need not be '/bin/bash' or your default login shell."
   abort
 fi
 
-OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-
 # Validate jq is installed
-if [ "${OS}" == "darwin" ]; then
-    if [ ! -x "$(command -v jq)"  ]; then
-       error "jq is required, but not found."
-       verbose 0 "On MacOS install with \"brew install jq\" and try again."
-       abort
-    fi
+if [ ! -x "$(command -v jq)"  ]; then
+    error "jq is required but not found."
+    macHint jq
+    abort
 fi
 
-
-# Validate gsed is installed
+# Validate sed/gsed is installed
+SED=sed
 if [ "${OS}" == "darwin" ]; then
-    if [ ! -x "$(command -v gsed)"  ]; then
-       error "gsed is required, but not found."
-       verbose 0 "On MacOS install with \"brew install gnu-sed\" and try again."
-       abort
-    fi
+  SED=gsed
+fi
+if [ ! -x "$(command -v $SED)"  ]; then
+    error "$SED is required but not found."
+    macHint gnu-sed
+    abort
 fi
