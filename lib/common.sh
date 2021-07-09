@@ -265,7 +265,7 @@ function dependencyFile {
 function dirSensitiveCmd {
   local cmdDir=$(dirname "$1")
   nd "$cmdDir"
-  $1
+  ./$(basename $1)
   od
 }
 
