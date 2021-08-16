@@ -74,7 +74,7 @@ Online help is available directly from the CLI using the global `-h` option.
 
 [View Usage](./USAGE.md)
 
-### Moving between teams
+### Moving between teams (projects)
 If you are moving from one team to another (between namespaces), you need to clean up the service account in the first namespace, and `ck` will create a user account for you in the second. Make sure you have permission to work with both projects.
 
 1. Connect to the OpenShift hosting the cluster pools
