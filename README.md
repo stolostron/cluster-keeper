@@ -73,3 +73,13 @@ On first use, Cluster Keeper will check if you are logged in to the ClusterPool 
 Online help is available directly from the CLI using the global `-h` option.
 
 [View Usage](./USAGE.md)
+
+### Moving between teams
+If you are moving from one team to another (between namespaces), you need to clean up the service account in the first namespace, and `ck` will create a user account for you in the second. Make sure you have permission to work with both projects.
+
+1. Connect to the OpenShift hosting the cluster pools
+2. Set your project to the original project (`oc project <PROJECT_NAME`) you were using to provision with cluster keeper
+3. Search for the service account that was being used in this project (`oc get sa`)
+4. Delete the service account once locate it (`oc delete sa SA_NAME`)
+5. Now update the user.env file, with the new `CLUSTERPOOL_TARGET_NAMESPACE` and `CLUSTERCLAIM_GROUP_NAME`
+6. Run a `ck` command, and a new service account will be setup in your new project, similar to what is described above in `Usage`
