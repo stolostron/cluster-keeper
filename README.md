@@ -73,3 +73,25 @@ On first use, Cluster Keeper will check if you are logged in to the ClusterPool 
 Online help is available directly from the CLI using the global `-h` option.
 
 [View Usage](./USAGE.md)
+
+## Changing ClusterPool host
+If you need to change the namespace or cluster that is hosting your ClusterPools, you can do the following.
+
+1. Delete the `ck` context (assuming you have not customized the context name with the `CLUSTERPOOL_CONTEXT_NAME` variable).
+   ```
+   oc config delete-context ck
+   ```
+1. Update your `user.env` file, changing the `CLUSTERPOOL_TARGET_NAMESPACE` or `CLUSTERCLAIM_GROUP_NAME` variables, for example.
+1. Run a cluster-keeper command such as `ck list pools`, which will open the ClusterPool host console in your browser. Copy the login command, paste and run it in your shell, then rerun the `ck list pools` command to complete setup.
+
+If you frequently use different ClusterPool host settings, you can set up multiple copies of cluster-keeper that use a different context name for the ClusterPool host.
+
+1. Clone a copy of cluster-keeper. Create the `user.env` file and use the `CLUSTERPOOL_CONTEXT_NAME` variable to define a unique context name. For example:
+   ```
+   CLUSTERPOOL_CONTEXT_NAME=ck:dev
+   ```
+1. Create a unique symlink for this copy of cluster-keeper.
+   ```
+   ln -s $(pwd)/ck /usr/local/bin/ck:dev
+   ```
+1. Now you can run commands like `ck:dev list cc` to see ClusterClaims in your "dev" environment or `ck:dev use ck:dev` to work with the ClusterPool host directly.
