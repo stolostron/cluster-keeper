@@ -198,7 +198,7 @@ function withContext {
   rm "$kubeconfig"
 }
 
-# Resolves a dependency on another open-cluster-management project
+# Resolves a dependency on another stolostron project
 function dependency {
   local dependencies localDep gitBase depName depRepo
   dependencies="$DIR/dependencies"
