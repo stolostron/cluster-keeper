@@ -2,7 +2,7 @@
 <img align="right" src="logo.png" alt="a hibernating bear hugs a cluster" width="256px" />
 
 Cluster Keeper provides a CLI for managing usage of multiple OpenShift clusters via [Hive](https://github.com/openshift/hive) `ClusterPools`, `ClusterClaims`, and `ClusterDeployments`.
-It is compatible with scheduled hibernation provided by [hibernate-cronjob](https://github.com/open-cluster-management/hibernate-cronjob).
+It is compatible with scheduled hibernation provided by [hibernate-cronjob](https://github.com/stolostron/hibernate-cronjob).
 
 With the `ck` CLI you can:
 - List and get ClusterPools, ClusterClaims, and ClusterDeployments
@@ -16,13 +16,13 @@ When any command requires communication with a cluster, Cluster Keeper will resu
 
 Except for the `ck use` command, Cluster Keeper will never change your current kubeconfig context. But Cluster Keeper creates a context for each cluster named according to the ClusterClaim. For any command that takes the name of a ClusterClaim, Cluster Keeper will infer it from the current context if it is not provided.
 
-Cluster Keeper leverages [Lifeguard](https://github.com/open-cluster-management/lifeguard) for many functions, but it sets the environment variables for you and does not require you to change directories.
+Cluster Keeper leverages [Lifeguard](https://github.com/stolostron/lifeguard) for many functions, but it sets the environment variables for you and does not require you to change directories.
 
 ## Installation
 
 1. Clone the repository. For example:
    ```
-   git clone git@github.com:open-cluster-management/cluster-keeper.git
+   git clone git@github.com:stolostron/cluster-keeper.git
    ```
 1. (_Optional, but highly recommended_) Create a symlink to `ck` on your path. For example:
    ```
@@ -39,10 +39,10 @@ Cluster Keeper leverages [Lifeguard](https://github.com/open-cluster-management/
 - `jq`
   - on macOS with [Homebrew](https://brew.sh/) installed, run `brew install jq`
 - `gsed`
-  - required by [Lifeguard](https://github.com/open-cluster-management/lifeguard) for macOS only
+  - required by [Lifeguard](https://github.com/stolostron/lifeguard) for macOS only
   - with [Homebrew](https://brew.sh/) installed, run `brew install gnu-sed`
-- Other projects from the `open-cluster-management` organization. (If you have `git` configured for CLI access, these will be automatically cloned to the `dependencies/` directory. Otherwise, you can manually clone these projects to the same directory where you cloned `cluster-keeper`.)
-  - [Lifeguard](https://github.com/open-cluster-management/lifeguard)
+- Other projects from the `stolostron` organization. (If you have `git` configured for CLI access, these will be automatically cloned to the `dependencies/` directory. Otherwise, you can manually clone these projects to the same directory where you cloned `cluster-keeper`.)
+  - [Lifeguard](https://github.com/stolostron/lifeguard)
 
 ## Configuration
 
@@ -60,7 +60,7 @@ Each line in this file has the form `VARIABLE=value` and will be sourced directl
 ### Optional Variables
 | Name | Default | Description |
 |------|---------|-------------|
-|`AUTO_HIBERNATION`|`true`|If value is `true`, all new clusters are configured to opt-in to hibernation by [hibernate-cronjob](https://github.com/open-cluster-management/hibernate-cronjob)|
+|`AUTO_HIBERNATION`|`true`|If value is `true`, all new clusters are configured to opt-in to hibernation by [hibernate-cronjob](https://github.com/stolostron/hibernate-cronjob)|
 |`CLUSTER_WAIT_MAX`|`60`|Maximum wait time in minutes for a `ClusterDeployment` to be assigned to the `ClusterClaim` when requesting a new cluster|
 |`HIBERNATE_WAIT_MAX`|`15`|Maximum wait time in minutes for a cluster to resume from hibernation|
 |`VERBOSITY`|`0`|Default verbosity level|
