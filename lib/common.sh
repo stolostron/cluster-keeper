@@ -31,7 +31,7 @@ function newCKServiceAccount {
   verbose 0 "Creating ServiceAccount $serviceAccount"
   cmdTry oc -n $CLUSTERPOOL_TARGET_NAMESPACE create serviceaccount $serviceAccount
   verbose 1 "Looking up token secret"
-  local tokenSecret=$(sub oc -n $CLUSTERPOOL_TARGET_NAMESPACE get ServiceAccount $serviceAccount -o json | jq -r '.secrets | map(select(.name | test("token")))[0] | .name')
+  local tokenSecret=$(sub oc -n $CLUSTERPOOL_TARGET_NAMESPACE get Secrets -o json | jq -r "[.items[] | select(.metadata.annotations[\"kubernetes.io/service-account.name\"] == \"$serviceAccount\" and .type == \"kubernetes.io/service-account-token\")][0].metadata.name")
   verbose 1 "Extracting token"
   local token=$(sub oc -n $CLUSTERPOOL_TARGET_NAMESPACE get Secret $tokenSecret -o json | jq -r '.data.token' | base64 --decode)
   verbose 0 "Logging in as ServiceAccount $serviceAccount"
@@ -84,7 +84,7 @@ function createContext {
   verbose 1 "Creating ClusterRoleBinding $user"
   cmdTry oc --kubeconfig $kubeconfig_temp create clusterrolebinding $user --clusterrole=cluster-admin --serviceaccount=default:$user
   verbose 1 "Looking up token secret"
-  local tokenSecret=$(sub oc --kubeconfig $kubeconfig_temp -n default get ServiceAccount $user -o json | jq -r '.secrets | map(select(.name | test("token")))[0] | .name')
+  local tokenSecret=$(sub oc --kubeconfig $kubeconfig_temp -n default get Secrets -o json | jq -r "[.items[] | select(.metadata.annotations[\"kubernetes.io/service-account.name\"] == \"$user\" and .type == \"kubernetes.io/service-account-token\")][0].metadata.name")
   verbose 1 "Extracting token"
   local token=$(sub oc --kubeconfig $kubeconfig_temp -n default get Secret $tokenSecret -o json | jq -r '.data.token' | base64 --decode)
   cmd oc --kubeconfig $kubeconfig_temp config set-credentials $context --token $token
