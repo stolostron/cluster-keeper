@@ -30,10 +30,11 @@ function newCKServiceAccount {
   local serviceAccount=$(echo "$user" | tr '[:upper:]' '[:lower:]' | tr -cd "[:alnum:]-_")
   verbose 0 "Creating ServiceAccount $serviceAccount"
   cmdTry oc -n $CLUSTERPOOL_TARGET_NAMESPACE create serviceaccount $serviceAccount
-  verbose 1 "Looking up token secret"
-  local tokenSecret=$(sub oc -n $CLUSTERPOOL_TARGET_NAMESPACE get Secrets -o json | jq -r "[.items[] | select(.metadata.annotations[\"kubernetes.io/service-account.name\"] == \"$serviceAccount\" and .type == \"kubernetes.io/service-account-token\")][0].metadata.name")
-  verbose 1 "Extracting token"
-  local token=$(sub oc -n $CLUSTERPOOL_TARGET_NAMESPACE get Secret $tokenSecret -o json | jq -r '.data.token' | base64 --decode)
+  verbose 1 "Creating token secret"
+  local tokenSecret="${serviceAccount}-token"
+  cmd oc -n $CLUSTERPOOL_TARGET_NAMESPACE create secret generic $tokenSecret
+  verbose 1 "Creating token"
+  local token=$(sub oc -n $CLUSTERPOOL_TARGET_NAMESPACE create token $serviceAccount --bound-object-kind Secret --bound-object-name $tokenSecret)
   verbose 0 "Logging in as ServiceAccount $serviceAccount"
   cmd oc login --token $token --server $CLUSTERPOOL_CLUSTER
 }
@@ -83,10 +84,11 @@ function createContext {
   cmdTry oc --kubeconfig $kubeconfig_temp -n default create serviceaccount $user
   verbose 1 "Creating ClusterRoleBinding $user"
   cmdTry oc --kubeconfig $kubeconfig_temp create clusterrolebinding $user --clusterrole=cluster-admin --serviceaccount=default:$user
-  verbose 1 "Looking up token secret"
-  local tokenSecret=$(sub oc --kubeconfig $kubeconfig_temp -n default get Secrets -o json | jq -r "[.items[] | select(.metadata.annotations[\"kubernetes.io/service-account.name\"] == \"$user\" and .type == \"kubernetes.io/service-account-token\")][0].metadata.name")
-  verbose 1 "Extracting token"
-  local token=$(sub oc --kubeconfig $kubeconfig_temp -n default get Secret $tokenSecret -o json | jq -r '.data.token' | base64 --decode)
+  verbose 1 "Creating token secret"
+  local tokenSecret="${user}-token"
+  cmd oc --kubeconfig $kubeconfig_temp create secret generic $tokenSecret -n default
+  verbose 1 "Creating token"
+  local token=$(sub oc --kubeconfig $kubeconfig_temp -n default create token $user --bound-object-kind Secret --bound-object-name $tokenSecret)
   cmd oc --kubeconfig $kubeconfig_temp config set-credentials $context --token $token
 
   # Generate flattened ClusterClaim kubeconfig
