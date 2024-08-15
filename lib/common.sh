@@ -32,9 +32,9 @@ function newCKServiceAccount {
   cmdTry oc -n $CLUSTERPOOL_TARGET_NAMESPACE create serviceaccount $serviceAccount
   verbose 1 "Creating token secret"
   local tokenSecret="${serviceAccount}-token"
-  cmd oc -n $CLUSTERPOOL_TARGET_NAMESPACE create secret generic $tokenSecret
+  cmdTry oc -n $CLUSTERPOOL_TARGET_NAMESPACE create secret generic $tokenSecret
   verbose 1 "Creating token"
-  local token=$(sub oc -n $CLUSTERPOOL_TARGET_NAMESPACE create token $serviceAccount --bound-object-kind Secret --bound-object-name $tokenSecret)
+  local token=$(sub oc -n $CLUSTERPOOL_TARGET_NAMESPACE create token $serviceAccount --bound-object-kind Secret --bound-object-name $tokenSecret --duration 8760h)
   verbose 0 "Logging in as ServiceAccount $serviceAccount"
   cmd oc login --token $token --server $CLUSTERPOOL_CLUSTER
 }
@@ -86,9 +86,9 @@ function createContext {
   cmdTry oc --kubeconfig $kubeconfig_temp create clusterrolebinding $user --clusterrole=cluster-admin --serviceaccount=default:$user
   verbose 1 "Creating token secret"
   local tokenSecret="${user}-token"
-  cmd oc --kubeconfig $kubeconfig_temp create secret generic $tokenSecret -n default
+  cmdTry oc --kubeconfig $kubeconfig_temp create secret generic $tokenSecret -n default
   verbose 1 "Creating token"
-  local token=$(sub oc --kubeconfig $kubeconfig_temp -n default create token $user --bound-object-kind Secret --bound-object-name $tokenSecret)
+  local token=$(sub oc --kubeconfig $kubeconfig_temp -n default create token $user --bound-object-kind Secret --bound-object-name $tokenSecret --duration 8760h)
   cmd oc --kubeconfig $kubeconfig_temp config set-credentials $context --token $token
 
   # Generate flattened ClusterClaim kubeconfig
